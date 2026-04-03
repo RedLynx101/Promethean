@@ -1,85 +1,132 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import { ArrowRight, ArrowLeft, Zap, Check } from "lucide-react";
+import { Send, Zap, Loader2, Bot } from "lucide-react";
 
 interface WizardState {
   name: string;
   description: string;
   domain: string;
   budgetPerRun: string;
-  latencyRequirement: string;
   riskTolerance: string;
+  humanOversightPreference: string;
   complianceRequirements: string;
   guardrails: string;
-  humanOversightPreference: string;
-  edgeCases: string;
+}
+
+type MessageRole = "agent" | "user";
+
+interface ChatMessage {
+  id: string;
+  role: MessageRole;
+  text: string;
+  choices?: string[];
+  inputType?: "text" | "multiline";
+  fieldKey?: keyof WizardState;
 }
 
 const DOMAINS = [
-  "Customer Success",
-  "Sales",
-  "Engineering",
-  "Legal & Compliance",
-  "Security",
-  "Data Engineering",
-  "Finance",
-  "Marketing",
-  "Operations",
-  "HR",
+  "Customer Success", "Sales", "Engineering", "Legal & Compliance",
+  "Security", "Data Engineering", "Finance", "Marketing", "Operations", "HR",
 ];
 
 const RISK_OPTIONS = ["Low", "Medium", "High", "Critical"];
 const OVERSIGHT_OPTIONS = [
-  "Fully automated — minimal human review",
-  "Human review at major milestones only",
-  "Human approval at each pipeline stage",
-  "Human in the loop for all decisions",
+  "Fully automated", "Review at major milestones", "Approval at each stage", "Human in the loop for all decisions",
 ];
 
-const STEPS = [
-  { id: "describe", label: "Describe" },
-  { id: "constraints", label: "Constraints" },
-  { id: "governance", label: "Governance" },
-  { id: "review", label: "Review" },
+const SCRIPT: Array<Omit<ChatMessage, "id">> = [
+  {
+    role: "agent",
+    text: "Prometheus online. I'm here to help you design and orchestrate a new AI workflow. What should we call this workflow?",
+    inputType: "text",
+    fieldKey: "name",
+  },
+  {
+    role: "agent",
+    text: "Good. Describe the workflow in as much detail as possible — what should it accomplish, what data does it process, and what outcome does it produce?",
+    inputType: "multiline",
+    fieldKey: "description",
+  },
+  {
+    role: "agent",
+    text: "Which operational domain does this workflow belong to?",
+    choices: DOMAINS,
+    fieldKey: "domain",
+  },
+  {
+    role: "agent",
+    text: "What is the risk tolerance for this workflow?",
+    choices: RISK_OPTIONS,
+    fieldKey: "riskTolerance",
+  },
+  {
+    role: "agent",
+    text: "How much human oversight do you want during execution?",
+    choices: OVERSIGHT_OPTIONS,
+    fieldKey: "humanOversightPreference",
+  },
+  {
+    role: "agent",
+    text: "Any compliance or regulatory requirements? (e.g., HIPAA, GDPR, SOC 2 — or type 'none')",
+    inputType: "text",
+    fieldKey: "complianceRequirements",
+  },
+  {
+    role: "agent",
+    text: "Any hard guardrails or constraints I must enforce? (e.g., 'Never access prod DB directly', 'Require approval > $500' — or type 'none')",
+    inputType: "multiline",
+    fieldKey: "guardrails",
+  },
+  {
+    role: "agent",
+    text: "Budget limit per run in USD? (leave blank to skip)",
+    inputType: "text",
+    fieldKey: "budgetPerRun",
+  },
 ];
+
+function makeId() {
+  return Math.random().toString(36).slice(2);
+}
 
 export default function WorkflowWizard() {
   const [, setLocation] = useLocation();
   const qc = useQueryClient();
-  const [step, setStep] = useState(0);
-  const [state, setState] = useState<WizardState>({
-    name: "",
-    description: "",
-    domain: "",
-    budgetPerRun: "",
-    latencyRequirement: "",
-    riskTolerance: "Medium",
-    complianceRequirements: "",
-    guardrails: "",
-    humanOversightPreference: "Human review at major milestones only",
-    edgeCases: "",
+
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: makeId(), ...SCRIPT[0] },
+  ]);
+  const [scriptStep, setScriptStep] = useState(0);
+  const [inputValue, setInputValue] = useState("");
+  const [wizardState, setWizardState] = useState<WizardState>({
+    name: "", description: "", domain: "", budgetPerRun: "",
+    riskTolerance: "Medium", humanOversightPreference: "Review at major milestones",
+    complianceRequirements: "", guardrails: "",
   });
+  const [isDone, setIsDone] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const createAndStart = useMutation({
-    mutationFn: async () => {
-      // 1. Create workflow
+    mutationFn: async (state: WizardState) => {
       const workflow = await apiFetch<{ id: string }>("/workflows", {
         method: "POST",
         body: JSON.stringify({ name: state.name, description: state.description, domain: state.domain }),
       });
-
-      // 2. Start pipeline
-      const pipelineResult = await apiFetch<{ workflowId: string; phase: string; workflow: { id: string } }>("/pipeline/start", {
+      await apiFetch("/pipeline/start", {
         method: "POST",
         body: JSON.stringify({
           workflowId: workflow.id,
-          description: buildBrief(),
+          description: buildBrief(state),
           domain: state.domain,
           constraints: {
             budgetPerRun: state.budgetPerRun ? parseFloat(state.budgetPerRun) : null,
-            latencyRequirement: state.latencyRequirement || null,
             riskTolerance: state.riskTolerance,
             complianceRequirements: state.complianceRequirements || null,
             guardrails: state.guardrails || null,
@@ -87,7 +134,6 @@ export default function WorkflowWizard() {
           },
         }),
       });
-
       return workflow.id;
     },
     onSuccess: (workflowId) => {
@@ -97,402 +143,219 @@ export default function WorkflowWizard() {
     },
   });
 
-  function buildBrief(): string {
-    return `${state.description}
-
-Domain: ${state.domain}
-Risk Tolerance: ${state.riskTolerance}
-Human Oversight: ${state.humanOversightPreference}
-${state.budgetPerRun ? `Budget per run: $${state.budgetPerRun}` : ""}
-${state.latencyRequirement ? `Latency requirement: ${state.latencyRequirement}` : ""}
-${state.complianceRequirements ? `Compliance: ${state.complianceRequirements}` : ""}
-${state.guardrails ? `Guardrails: ${state.guardrails}` : ""}
-${state.edgeCases ? `Edge cases to handle: ${state.edgeCases}` : ""}`;
+  function buildBrief(state: WizardState): string {
+    return [
+      state.description,
+      `Domain: ${state.domain}`,
+      `Risk Tolerance: ${state.riskTolerance}`,
+      `Human Oversight: ${state.humanOversightPreference}`,
+      state.budgetPerRun ? `Budget per run: $${state.budgetPerRun}` : "",
+      state.complianceRequirements && state.complianceRequirements !== "none" ? `Compliance: ${state.complianceRequirements}` : "",
+      state.guardrails && state.guardrails !== "none" ? `Guardrails: ${state.guardrails}` : "",
+    ].filter(Boolean).join("\n");
   }
 
-  const update = (key: keyof WizardState) => (value: string) =>
-    setState((s) => ({ ...s, [key]: value }));
+  function submitAnswer(answer: string) {
+    const current = SCRIPT[scriptStep];
+    if (!answer.trim() && current.fieldKey !== "budgetPerRun") return;
 
-  const canAdvance = () => {
-    if (step === 0) return state.name.length > 0 && state.description.length > 10;
-    if (step === 1) return state.domain.length > 0;
-    return true;
-  };
+    const userMsg: ChatMessage = { id: makeId(), role: "user", text: answer || "(skipped)" };
+    const newState = { ...wizardState };
+    if (current.fieldKey) {
+      newState[current.fieldKey] = answer;
+    }
+    setWizardState(newState);
+    setInputValue("");
+
+    const nextStep = scriptStep + 1;
+
+    if (nextStep >= SCRIPT.length) {
+      const confirmMsg: ChatMessage = {
+        id: makeId(),
+        role: "agent",
+        text: `All set. I have everything I need to architect "${newState.name}". Launching the four-agent pipeline now — Decomposition → System Selection → Orchestration → Governance. Standing by for your review at each gate.`,
+      };
+      setMessages((prev) => [...prev, userMsg, confirmMsg]);
+      setIsDone(true);
+      createAndStart.mutate(newState);
+    } else {
+      const nextPrompt: ChatMessage = { id: makeId(), ...SCRIPT[nextStep] };
+      setMessages((prev) => [...prev, userMsg, nextPrompt]);
+      setScriptStep(nextStep);
+    }
+  }
+
+  function handleChoiceClick(choice: string) {
+    submitAnswer(choice);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    const current = SCRIPT[scriptStep];
+    if (e.key === "Enter" && !e.shiftKey && current.inputType !== "multiline") {
+      e.preventDefault();
+      submitAnswer(inputValue);
+    }
+  }
+
+  const currentPrompt = SCRIPT[scriptStep];
+  const isMultiline = currentPrompt?.inputType === "multiline";
+  const hasChoices = Boolean(currentPrompt?.choices);
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-8"
-      style={{ background: "#0a0e14" }}
-    >
-      {/* Grid background */}
-      <div className="fixed inset-0 grid-pattern opacity-30 pointer-events-none" />
+    <div className="flex flex-col h-screen" style={{ background: "#0a0e14" }}>
+      {/* Fixed grid background */}
+      <div className="fixed inset-0 grid-pattern opacity-20 pointer-events-none" />
 
-      <div className="relative w-full max-w-2xl">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div
-            className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.3)" }}
-          >
-            <Zap className="w-7 h-7" style={{ color: "#00d4ff" }} />
-          </div>
-          <h1 className="font-orbitron text-xl font-bold mb-2" style={{ color: "#00d4ff" }}>
-            NEW WORKFLOW
+      {/* Header */}
+      <div
+        className="flex items-center gap-3 px-6 py-4 border-b flex-shrink-0 relative z-10"
+        style={{ background: "rgba(22,27,34,0.95)", borderColor: "rgba(0,212,255,0.15)" }}
+      >
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{ background: "rgba(0,212,255,0.12)", border: "1px solid rgba(0,212,255,0.3)" }}
+        >
+          <Zap className="w-4 h-4" style={{ color: "#00d4ff" }} />
+        </div>
+        <div>
+          <h1 className="font-orbitron text-sm font-bold tracking-wider" style={{ color: "#00d4ff" }}>
+            PROMETHEUS INTAKE
           </h1>
-          <p className="text-sm" style={{ color: "rgba(230,237,243,0.5)" }}>
-            Describe your workflow and our AI agents will analyze and orchestrate it
+          <p className="text-xs" style={{ color: "rgba(230,237,243,0.4)" }}>
+            Conversational workflow design assistant
           </p>
         </div>
-
-        {/* Step indicator */}
-        <div className="flex items-center justify-center gap-0 mb-10">
-          {STEPS.map((s, i) => (
-            <div key={s.id} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-jetbrains font-bold transition-all"
-                  style={{
-                    background: i < step ? "rgba(0,255,136,0.2)" : i === step ? "rgba(0,212,255,0.2)" : "rgba(255,255,255,0.05)",
-                    border: `2px solid ${i < step ? "#00ff88" : i === step ? "#00d4ff" : "rgba(255,255,255,0.1)"}`,
-                    color: i < step ? "#00ff88" : i === step ? "#00d4ff" : "rgba(230,237,243,0.3)",
-                  }}
-                >
-                  {i < step ? <Check className="w-4 h-4" /> : i + 1}
-                </div>
-                <span
-                  className="text-xs mt-1 font-jetbrains"
-                  style={{ color: i === step ? "#00d4ff" : "rgba(230,237,243,0.3)" }}
-                >
-                  {s.label}
-                </span>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div
-                  className="w-16 h-px mx-2 mb-5"
-                  style={{ background: i < step ? "rgba(0,255,136,0.4)" : "rgba(255,255,255,0.1)" }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Card */}
-        <div
-          className="rounded-2xl p-8"
-          style={{ background: "#161b22", border: "1px solid rgba(0,212,255,0.2)" }}
-        >
-          {step === 0 && (
-            <div className="space-y-6">
-              <h2 className="font-orbitron text-base font-bold" style={{ color: "#e6edf3" }}>
-                Describe Your Workflow
-              </h2>
-              <div>
-                <label className="block text-xs font-jetbrains uppercase tracking-widest mb-2" style={{ color: "rgba(230,237,243,0.5)" }}>
-                  Workflow Name *
-                </label>
-                <input
-                  type="text"
-                  value={state.name}
-                  onChange={(e) => update("name")(e.target.value)}
-                  placeholder="e.g., Customer Support Triage"
-                  className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all"
-                  style={{
-                    background: "#0a0e14",
-                    border: "1px solid rgba(0,212,255,0.2)",
-                    color: "#e6edf3",
-                    fontFamily: "Inter",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "rgba(0,212,255,0.5)")}
-                  onBlur={(e) => (e.target.style.borderColor = "rgba(0,212,255,0.2)")}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-jetbrains uppercase tracking-widest mb-2" style={{ color: "rgba(230,237,243,0.5)" }}>
-                  Workflow Description *
-                </label>
-                <textarea
-                  value={state.description}
-                  onChange={(e) => update("description")(e.target.value)}
-                  placeholder="Describe what your workflow does, its inputs, outputs, and key decision points. The more detail you provide, the better our AI agents can analyze it."
-                  rows={5}
-                  className="w-full px-4 py-3 rounded-lg text-sm outline-none resize-none transition-all"
-                  style={{
-                    background: "#0a0e14",
-                    border: "1px solid rgba(0,212,255,0.2)",
-                    color: "#e6edf3",
-                    fontFamily: "Inter",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "rgba(0,212,255,0.5)")}
-                  onBlur={(e) => (e.target.style.borderColor = "rgba(0,212,255,0.2)")}
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 1 && (
-            <div className="space-y-6">
-              <h2 className="font-orbitron text-base font-bold" style={{ color: "#e6edf3" }}>
-                Constraints & Requirements
-              </h2>
-              <div>
-                <label className="block text-xs font-jetbrains uppercase tracking-widest mb-2" style={{ color: "rgba(230,237,243,0.5)" }}>
-                  Domain *
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {DOMAINS.map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => update("domain")(d)}
-                      className="px-3 py-2 rounded-lg text-sm text-left transition-all"
-                      style={{
-                        background: state.domain === d ? "rgba(0,212,255,0.15)" : "#0a0e14",
-                        border: `1px solid ${state.domain === d ? "rgba(0,212,255,0.5)" : "rgba(255,255,255,0.08)"}`,
-                        color: state.domain === d ? "#00d4ff" : "rgba(230,237,243,0.6)",
-                      }}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-jetbrains uppercase tracking-widest mb-2" style={{ color: "rgba(230,237,243,0.5)" }}>
-                    Budget per run ($)
-                  </label>
-                  <input
-                    type="number"
-                    value={state.budgetPerRun}
-                    onChange={(e) => update("budgetPerRun")(e.target.value)}
-                    placeholder="e.g., 0.50"
-                    step="0.01"
-                    className="w-full px-4 py-3 rounded-lg text-sm outline-none"
-                    style={{ background: "#0a0e14", border: "1px solid rgba(0,212,255,0.2)", color: "#e6edf3" }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-jetbrains uppercase tracking-widest mb-2" style={{ color: "rgba(230,237,243,0.5)" }}>
-                    Latency Requirement
-                  </label>
-                  <input
-                    type="text"
-                    value={state.latencyRequirement}
-                    onChange={(e) => update("latencyRequirement")(e.target.value)}
-                    placeholder="e.g., under 5 seconds"
-                    className="w-full px-4 py-3 rounded-lg text-sm outline-none"
-                    style={{ background: "#0a0e14", border: "1px solid rgba(0,212,255,0.2)", color: "#e6edf3" }}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-jetbrains uppercase tracking-widest mb-2" style={{ color: "rgba(230,237,243,0.5)" }}>
-                  Risk Tolerance
-                </label>
-                <div className="flex gap-2">
-                  {RISK_OPTIONS.map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => update("riskTolerance")(r)}
-                      className="flex-1 py-2 rounded-lg text-sm transition-all"
-                      style={{
-                        background: state.riskTolerance === r ? "rgba(0,212,255,0.15)" : "#0a0e14",
-                        border: `1px solid ${state.riskTolerance === r ? "rgba(0,212,255,0.5)" : "rgba(255,255,255,0.08)"}`,
-                        color: state.riskTolerance === r ? "#00d4ff" : "rgba(230,237,243,0.6)",
-                      }}
-                    >
-                      {r}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-jetbrains uppercase tracking-widest mb-2" style={{ color: "rgba(230,237,243,0.5)" }}>
-                  Compliance Requirements
-                </label>
-                <input
-                  type="text"
-                  value={state.complianceRequirements}
-                  onChange={(e) => update("complianceRequirements")(e.target.value)}
-                  placeholder="e.g., GDPR, HIPAA, SOC 2, PCI-DSS"
-                  className="w-full px-4 py-3 rounded-lg text-sm outline-none"
-                  style={{ background: "#0a0e14", border: "1px solid rgba(0,212,255,0.2)", color: "#e6edf3" }}
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-6">
-              <h2 className="font-orbitron text-base font-bold" style={{ color: "#e6edf3" }}>
-                Governance & Oversight
-              </h2>
-              <div>
-                <label className="block text-xs font-jetbrains uppercase tracking-widest mb-2" style={{ color: "rgba(230,237,243,0.5)" }}>
-                  Human Oversight Preference
-                </label>
-                <div className="space-y-2">
-                  {OVERSIGHT_OPTIONS.map((o) => (
-                    <button
-                      key={o}
-                      onClick={() => update("humanOversightPreference")(o)}
-                      className="w-full px-4 py-3 rounded-lg text-sm text-left transition-all"
-                      style={{
-                        background: state.humanOversightPreference === o ? "rgba(0,212,255,0.15)" : "#0a0e14",
-                        border: `1px solid ${state.humanOversightPreference === o ? "rgba(0,212,255,0.5)" : "rgba(255,255,255,0.08)"}`,
-                        color: state.humanOversightPreference === o ? "#00d4ff" : "rgba(230,237,243,0.6)",
-                      }}
-                    >
-                      {o}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-jetbrains uppercase tracking-widest mb-2" style={{ color: "rgba(230,237,243,0.5)" }}>
-                  Guardrails & Safety Constraints
-                </label>
-                <textarea
-                  value={state.guardrails}
-                  onChange={(e) => update("guardrails")(e.target.value)}
-                  placeholder="e.g., Never send emails without human approval, always validate PII before processing, rate limit to 100 requests/min"
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-lg text-sm outline-none resize-none"
-                  style={{ background: "#0a0e14", border: "1px solid rgba(0,212,255,0.2)", color: "#e6edf3" }}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-jetbrains uppercase tracking-widest mb-2" style={{ color: "rgba(230,237,243,0.5)" }}>
-                  Edge Cases to Handle
-                </label>
-                <textarea
-                  value={state.edgeCases}
-                  onChange={(e) => update("edgeCases")(e.target.value)}
-                  placeholder="e.g., What happens when the input is malformed? How should rate limit errors be handled?"
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-lg text-sm outline-none resize-none"
-                  style={{ background: "#0a0e14", border: "1px solid rgba(0,212,255,0.2)", color: "#e6edf3" }}
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-5">
-              <h2 className="font-orbitron text-base font-bold" style={{ color: "#e6edf3" }}>
-                Review & Launch Pipeline
-              </h2>
-              <div
-                className="rounded-xl p-5 space-y-4"
-                style={{ background: "#0a0e14", border: "1px solid rgba(0,212,255,0.15)" }}
-              >
-                <div className="grid grid-cols-2 gap-4 text-sm font-jetbrains">
-                  <div>
-                    <span style={{ color: "rgba(230,237,243,0.5)" }}>Name</span>
-                    <p style={{ color: "#e6edf3" }}>{state.name}</p>
-                  </div>
-                  <div>
-                    <span style={{ color: "rgba(230,237,243,0.5)" }}>Domain</span>
-                    <p style={{ color: "#e6edf3" }}>{state.domain}</p>
-                  </div>
-                  <div>
-                    <span style={{ color: "rgba(230,237,243,0.5)" }}>Risk Tolerance</span>
-                    <p style={{ color: "#e6edf3" }}>{state.riskTolerance}</p>
-                  </div>
-                  <div>
-                    <span style={{ color: "rgba(230,237,243,0.5)" }}>Budget</span>
-                    <p style={{ color: "#e6edf3" }}>{state.budgetPerRun ? `$${state.budgetPerRun}/run` : "—"}</p>
-                  </div>
-                </div>
-                <div className="text-sm font-jetbrains">
-                  <span style={{ color: "rgba(230,237,243,0.5)" }}>Description</span>
-                  <p className="mt-1" style={{ color: "#e6edf3" }}>
-                    {state.description}
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className="rounded-xl p-4"
-                style={{ background: "rgba(0,212,255,0.05)", border: "1px solid rgba(0,212,255,0.2)" }}
-              >
-                <p className="text-xs font-jetbrains" style={{ color: "#00d4ff" }}>
-                  🚀 The AI pipeline will now run 4 agents:
-                </p>
-                <ol className="mt-2 space-y-1 text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.6)" }}>
-                  <li>1. <strong style={{ color: "#00d4ff" }}>Decomposition Agent</strong> — breaks down your workflow into atomic steps</li>
-                  <li>2. <strong style={{ color: "#FF9800" }}>System Selection Agent</strong> — classifies each step on L0-L5 spectrum</li>
-                  <li>3. <strong style={{ color: "#E91E63" }}>Orchestration Agent</strong> — adds tools, conditions, and error handling</li>
-                  <li>4. <strong style={{ color: "#9C27B0" }}>Governance Agent</strong> — configures monitoring and drift detection</li>
-                </ol>
-              </div>
-
-              {createAndStart.error && (
-                <p className="text-sm text-red-400 font-jetbrains">
-                  Error: {(createAndStart.error as Error).message}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-6">
-          <button
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
-            disabled={step === 0}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm transition-all disabled:opacity-40"
-            style={{
-              background: "#161b22",
-              border: "1px solid rgba(0,212,255,0.2)",
-              color: "#e6edf3",
-            }}
+        <div className="ml-auto flex items-center gap-2">
+          <span
+            className="text-xs font-jetbrains px-2 py-1 rounded"
+            style={{ background: "rgba(0,255,136,0.08)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.2)" }}
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
-
-          {step < STEPS.length - 1 ? (
-            <button
-              onClick={() => canAdvance() && setStep((s) => s + 1)}
-              disabled={!canAdvance()}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-40 hover:opacity-90"
-              style={{
-                background: "linear-gradient(135deg, rgba(0,212,255,0.3), rgba(255,0,170,0.3))",
-                border: "1px solid rgba(0,212,255,0.5)",
-                color: "#00d4ff",
-              }}
-            >
-              Continue
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              onClick={() => createAndStart.mutate()}
-              disabled={createAndStart.isPending}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-40 hover:opacity-90"
-              style={{
-                background: "linear-gradient(135deg, rgba(0,212,255,0.3), rgba(255,0,170,0.3))",
-                border: "1px solid rgba(0,212,255,0.5)",
-                color: "#00d4ff",
-                fontFamily: "'Orbitron', sans-serif",
-                letterSpacing: "0.05em",
-              }}
-            >
-              {createAndStart.isPending ? (
-                <>
-                  <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#00d4ff" }} />
-                  LAUNCHING...
-                </>
-              ) : (
-                <>
-                  <Zap className="w-4 h-4" />
-                  LAUNCH PIPELINE
-                </>
-              )}
-            </button>
-          )}
+            {scriptStep} / {SCRIPT.length} complete
+          </span>
         </div>
       </div>
+
+      {/* Chat messages */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 relative z-10">
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
+          >
+            {msg.role === "agent" && (
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                style={{ background: "rgba(0,212,255,0.12)", border: "1px solid rgba(0,212,255,0.25)" }}
+              >
+                <Bot className="w-4 h-4" style={{ color: "#00d4ff" }} />
+              </div>
+            )}
+            <div
+              className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                msg.role === "user" ? "rounded-tr-sm" : "rounded-tl-sm"
+              }`}
+              style={{
+                background:
+                  msg.role === "agent"
+                    ? "rgba(22,27,34,0.9)"
+                    : "rgba(0,212,255,0.12)",
+                border:
+                  msg.role === "agent"
+                    ? "1px solid rgba(0,212,255,0.12)"
+                    : "1px solid rgba(0,212,255,0.3)",
+                color: msg.role === "agent" ? "#e6edf3" : "#00d4ff",
+                fontFamily: msg.role === "user" ? "'JetBrains Mono', monospace" : "Inter, sans-serif",
+              }}
+            >
+              {msg.text}
+            </div>
+          </div>
+        ))}
+
+        {/* Choice chips for current prompt */}
+        {!isDone && hasChoices && !createAndStart.isPending && (
+          <div className="flex gap-2 flex-wrap pl-11">
+            {SCRIPT[scriptStep].choices?.map((choice) => (
+              <button
+                key={choice}
+                onClick={() => handleChoiceClick(choice)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
+                style={{
+                  background: "rgba(0,212,255,0.08)",
+                  border: "1px solid rgba(0,212,255,0.25)",
+                  color: "#00d4ff",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
+              >
+                {choice}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Launching indicator */}
+        {createAndStart.isPending && (
+          <div className="flex items-center gap-3 pl-11">
+            <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#00d4ff" }} />
+            <span className="text-xs font-jetbrains" style={{ color: "rgba(0,212,255,0.6)" }}>
+              Initializing pipeline…
+            </span>
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input area */}
+      {!isDone && !hasChoices && (
+        <div
+          className="flex-shrink-0 border-t px-6 py-4 relative z-10"
+          style={{ background: "rgba(22,27,34,0.95)", borderColor: "rgba(0,212,255,0.15)" }}
+        >
+          <div className="flex gap-3 items-end">
+            <textarea
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                currentPrompt?.fieldKey === "budgetPerRun"
+                  ? "Enter amount in USD, or leave blank to skip…"
+                  : isMultiline
+                  ? "Describe in detail… (Shift+Enter for new line, Enter to send)"
+                  : "Type your answer… (Enter to send)"
+              }
+              rows={isMultiline ? 3 : 1}
+              className="flex-1 px-4 py-3 rounded-xl text-sm outline-none resize-none"
+              style={{
+                background: "#0a0e14",
+                border: "1px solid rgba(0,212,255,0.25)",
+                color: "#e6edf3",
+                fontFamily: "Inter, sans-serif",
+                lineHeight: "1.5",
+              }}
+              onFocus={(e) => (e.target.style.borderColor = "rgba(0,212,255,0.5)")}
+              onBlur={(e) => (e.target.style.borderColor = "rgba(0,212,255,0.25)")}
+            />
+            <button
+              onClick={() => submitAnswer(inputValue)}
+              disabled={!inputValue.trim() && currentPrompt?.fieldKey !== "budgetPerRun"}
+              className="flex items-center justify-center w-10 h-10 rounded-xl transition-all hover:opacity-90 disabled:opacity-40 flex-shrink-0"
+              style={{
+                background: "rgba(0,212,255,0.15)",
+                border: "1px solid rgba(0,212,255,0.4)",
+              }}
+            >
+              <Send className="w-4 h-4" style={{ color: "#00d4ff" }} />
+            </button>
+          </div>
+          {isMultiline && (
+            <p className="text-xs mt-2 font-jetbrains" style={{ color: "rgba(230,237,243,0.25)" }}>
+              Shift+Enter for new line · Enter sends
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

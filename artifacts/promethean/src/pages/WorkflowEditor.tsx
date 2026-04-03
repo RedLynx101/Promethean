@@ -544,8 +544,8 @@ export default function WorkflowEditor() {
         </div>
       )}
 
-      {/* System Level Override Panel — shown at Gate 2 (system_selection) */}
-      {currentPhase === "system_selection" && isPending && nodes.length > 0 && (
+      {/* System Level Override Panel — shown at Gate 2 (select phase) */}
+      {currentPhase === "select" && isPending && nodes.length > 0 && (
         <div
           className="px-6 py-4 border-b flex-shrink-0 overflow-x-auto"
           style={{ background: "rgba(33,150,243,0.04)", borderColor: "rgba(33,150,243,0.2)" }}

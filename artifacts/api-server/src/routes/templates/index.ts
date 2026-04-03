@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, ilike, and } from "drizzle-orm";
 import { db } from "@workspace/db";
-import { templatesTable, workflowsTable } from "@workspace/db";
+import { templatesTable, workflowsTable, type InsertTemplate } from "@workspace/db";
 import {
   ListTemplatesQueryParams,
   GetTemplateParams,
@@ -119,17 +119,16 @@ router.post("/templates", async (req, res): Promise<void> => {
     return;
   }
 
-  const [template] = await db.insert(templatesTable).values({
+  const insertValues: InsertTemplate = {
     name: body.name as string,
     description: (body.description as string | null) ?? null,
     domain: (body.domain as string | null) ?? null,
     tags: Array.isArray(body.tags) ? (body.tags as string[]) : [],
-    nodes: Array.isArray(body.nodes) ? (body.nodes as never[]) : ([] as never[]),
-    edges: Array.isArray(body.edges) ? (body.edges as never[]) : ([] as never[]),
     isPublic: typeof body.isPublic === "boolean" ? body.isPublic : true,
-    estimatedCostPerRun: body.estimatedCostPerRun != null ? String(body.estimatedCostPerRun) as never : null,
+    estimatedCostPerRun: body.estimatedCostPerRun != null ? String(body.estimatedCostPerRun) : null,
     estimatedLatencyMs: typeof body.estimatedLatencyMs === "number" ? body.estimatedLatencyMs : null,
-  }).returning();
+  };
+  const [template] = await db.insert(templatesTable).values(insertValues).returning();
 
   res.status(201).json(serializeTemplate(template as unknown as Record<string, unknown>));
 });
@@ -148,19 +147,17 @@ router.patch("/templates/:id", async (req, res): Promise<void> => {
   }
 
   const body = req.body as Record<string, unknown>;
-  const updateData: Record<string, unknown> = {};
-  if (body.name != null) updateData.name = body.name;
-  if (body.description != null) updateData.description = body.description;
-  if (body.domain != null) updateData.domain = body.domain;
-  if (Array.isArray(body.tags)) updateData.tags = body.tags;
-  if (Array.isArray(body.nodes)) updateData.nodes = body.nodes;
-  if (Array.isArray(body.edges)) updateData.edges = body.edges;
-  if (body.isPublic != null) updateData.isPublic = body.isPublic;
+  const updateData: Partial<InsertTemplate> = {};
+  if (body.name != null) updateData.name = body.name as string;
+  if (body.description != null) updateData.description = body.description as string;
+  if (body.domain != null) updateData.domain = body.domain as string;
+  if (Array.isArray(body.tags)) updateData.tags = body.tags as string[];
+  if (body.isPublic != null) updateData.isPublic = body.isPublic as boolean;
   if (body.estimatedCostPerRun != null) updateData.estimatedCostPerRun = String(body.estimatedCostPerRun);
-  if (body.estimatedLatencyMs != null) updateData.estimatedLatencyMs = body.estimatedLatencyMs;
+  if (body.estimatedLatencyMs != null) updateData.estimatedLatencyMs = body.estimatedLatencyMs as number;
 
   const [updated] = await db.update(templatesTable)
-    .set(updateData as never)
+    .set(updateData)
     .where(eq(templatesTable.id, rawId))
     .returning();
 
