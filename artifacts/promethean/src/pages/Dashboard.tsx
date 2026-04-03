@@ -71,7 +71,7 @@ function KPICard({
 }: {
   title: string;
   value: string | number;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; color?: string }>;
   subtitle?: string;
   color?: string;
 }) {
@@ -107,7 +107,7 @@ function KPICard({
           className="w-10 h-10 rounded-lg flex items-center justify-center"
           style={{ background: `${color}20`, border: `1px solid ${color}40` }}
         >
-          <Icon className="w-5 h-5" style={{ color }} />
+          <Icon className="w-5 h-5" color={color} />
         </div>
       </div>
     </div>

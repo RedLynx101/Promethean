@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db } from "@workspace/db";
-import { executionsTable, executionStepsTable } from "@workspace/db";
+import { executionsTable, executionStepsTable, workflowsTable } from "@workspace/db";
 import {
   ListExecutionsQueryParams,
   GetExecutionParams,
@@ -29,6 +29,52 @@ router.get("/executions", async (req, res): Promise<void> => {
   filtered = filtered.slice(0, limit);
 
   res.json(filtered.map(serializeExecution));
+});
+
+router.post("/executions", async (req, res): Promise<void> => {
+  const body = req.body as Record<string, unknown>;
+  const workflowId = typeof body?.workflowId === "string" ? body.workflowId : null;
+  const inputData = body?.inputData as Record<string, unknown> | undefined;
+
+  if (!workflowId) {
+    res.status(400).json({ error: "workflowId is required" });
+    return;
+  }
+
+  const [workflow] = await db.select().from(workflowsTable).where(eq(workflowsTable.id, workflowId));
+  if (!workflow) {
+    res.status(404).json({ error: "Workflow not found" });
+    return;
+  }
+
+  if (workflow.phase !== "deployed") {
+    res.status(400).json({ error: "Workflow must be deployed before it can be run" });
+    return;
+  }
+
+  const latencyMs = workflow.estimatedLatencyMs ?? Math.floor(Math.random() * 8000) + 2000;
+  const costUsd = workflow.estimatedCostPerRun != null
+    ? Number(workflow.estimatedCostPerRun)
+    : Math.random() * 0.1;
+  const success = Math.random() > 0.1;
+
+  const startedAt = new Date();
+  const completedAt = new Date(startedAt.getTime() + latencyMs);
+
+  const [execution] = await db.insert(executionsTable).values({
+    workflowId,
+    triggeredBy: "manual",
+    status: success ? "success" : "failed",
+    startedAt,
+    completedAt,
+    totalLatencyMs: latencyMs,
+    totalCost: costUsd.toFixed(6) as never,
+    triggerPayload: inputData ?? null,
+    result: success ? { output: "Execution completed successfully" } : null,
+    error: success ? null : { message: "Simulated execution failure" },
+  }).returning();
+
+  res.status(201).json(serializeExecution(execution as unknown as Record<string, unknown>));
 });
 
 router.get("/executions/:id", async (req, res): Promise<void> => {

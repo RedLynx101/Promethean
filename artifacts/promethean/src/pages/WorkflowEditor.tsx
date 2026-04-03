@@ -12,19 +12,19 @@ import {
   useEdgesState,
   MarkerType,
   type Connection,
+  type Node,
+  type Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { apiFetch } from "@/lib/api";
-import { PHASES, SYSTEM_LEVEL_COLORS } from "@/lib/constants";
+import { PHASES, SYSTEM_LEVEL_COLORS, TRIGGER_COLOR } from "@/lib/constants";
 import PrometheanNode from "@/components/workflow/PrometheanNode";
 import {
   Check,
   X,
-  RefreshCw,
   Zap,
   AlertTriangle,
   ChevronRight,
-  Play,
   Loader2,
 } from "lucide-react";
 
@@ -54,9 +54,11 @@ interface WorkflowVersion {
 interface PipelineStatus {
   workflowId: string;
   phase: string;
+  status?: string;
   pendingApproval?: boolean;
   currentVersion?: WorkflowVersion | null;
   workflow: Workflow & {
+    status?: string;
     nodes?: Array<Record<string, unknown>>;
     edges?: Array<Record<string, unknown>>;
   };
@@ -141,8 +143,8 @@ export default function WorkflowEditor() {
     },
   });
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([] as Node[]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([] as Edge[]);
 
   useEffect(() => {
     if (!status) return;
@@ -176,8 +178,8 @@ export default function WorkflowEditor() {
         markerEnd: { type: MarkerType.ArrowClosed, color: "rgba(0,212,255,0.5)" },
         style: { stroke: "rgba(0,212,255,0.3)", strokeWidth: 2 },
       }));
-      setNodes(n as never[]);
-      setEdges(e as never[]);
+      setNodes(n as Node[]);
+      setEdges(e as Edge[]);
     } else if (status.currentVersion) {
       // Fall back to building from orchestration plan
       const { nodes: n, edges: e } = buildNodesAndEdges(status.currentVersion);
@@ -192,15 +194,19 @@ export default function WorkflowEditor() {
   );
 
   const approvePhase = useMutation({
-    mutationFn: () => apiFetch(`/pipeline/${workflowId}/approve`, { method: "POST" }),
+    mutationFn: () =>
+      apiFetch(`/pipeline/${workflowId}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ phase: currentPhase }),
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["pipeline-status", workflowId] }),
   });
 
   const rejectPhase = useMutation({
-    mutationFn: (reason: string) =>
+    mutationFn: (feedback: string) =>
       apiFetch(`/pipeline/${workflowId}/reject`, {
         method: "POST",
-        body: JSON.stringify({ reason }),
+        body: JSON.stringify({ phase: currentPhase, feedback: feedback || undefined }),
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["pipeline-status", workflowId] }),
   });
@@ -210,7 +216,11 @@ export default function WorkflowEditor() {
 
   const currentPhase = status?.phase ?? "wizard";
   const currentStep = phaseStep(currentPhase);
-  const isPending = status?.pendingApproval;
+  // Backend signals approval needed via status = "awaiting_approval" or explicit pendingApproval field
+  const isPending =
+    status?.pendingApproval === true ||
+    status?.workflow?.status === "awaiting_approval" ||
+    status?.status === "awaiting_approval";
   const isRunning = !isPending && !["wizard", "deployed"].includes(currentPhase);
 
   if (isLoading) {

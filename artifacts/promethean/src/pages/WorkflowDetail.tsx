@@ -33,7 +33,9 @@ interface Execution {
   totalLatencyMs?: number | null;
   costUsd?: number | null;
   totalCostUsd?: number | null;
-  errorMessage: string | null;
+  totalCost?: number | null;
+  errorMessage?: string | null;
+  error?: Record<string, unknown> | null;
 }
 
 interface Workflow {
@@ -77,7 +79,7 @@ export default function WorkflowDetail() {
       : 0;
 
   const getDuration = (e: Execution) => e.durationMs ?? e.totalLatencyMs ?? null;
-  const getCost = (e: Execution) => e.costUsd ?? e.totalCostUsd ?? null;
+  const getCost = (e: Execution) => e.costUsd ?? e.totalCostUsd ?? e.totalCost ?? null;
 
   const avgDuration =
     executions.filter((e) => getDuration(e)).length > 0

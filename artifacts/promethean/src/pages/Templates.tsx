@@ -44,16 +44,17 @@ export default function Templates() {
   });
 
   const deployTemplate = useMutation({
-    mutationFn: async (templateId: string) => {
-      setDeploying(templateId);
-      const result = await apiFetch<{ workflowId: string }>(`/templates/${templateId}/deploy`, {
+    mutationFn: async (template: Template) => {
+      setDeploying(template.id);
+      const result = await apiFetch<{ id: string; name: string }>(`/templates/${template.id}/deploy`, {
         method: "POST",
+        body: JSON.stringify({ name: template.name }),
       });
       return result;
     },
-    onSuccess: ({ workflowId }) => {
+    onSuccess: (workflow) => {
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      navigate(`/workflow/${workflowId}`);
+      navigate(`/workflow/${workflow.id}`);
     },
     onError: () => setDeploying(null),
   });
@@ -255,7 +256,7 @@ export default function Templates() {
 
                   {/* Deploy button */}
                   <button
-                    onClick={() => deployTemplate.mutate(template.id)}
+                    onClick={() => deployTemplate.mutate(template)}
                     disabled={isDeploying}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50"
                     style={{
