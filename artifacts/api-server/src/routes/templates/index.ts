@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { templatesTable, workflowsTable } from "@workspace/db";
 import {
@@ -41,7 +41,7 @@ router.get("/templates", async (req, res): Promise<void> => {
     return;
   }
 
-  let templates = await db.select().from(templatesTable).orderBy(templatesTable.usageCount);
+  let templates = await db.select().from(templatesTable).orderBy(desc(templatesTable.usageCount));
 
   if (query.data.domain) {
     const d = query.data.domain;
