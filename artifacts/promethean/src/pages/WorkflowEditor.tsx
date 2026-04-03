@@ -289,6 +289,10 @@ export default function WorkflowEditor() {
     alertOnFailure: true,
     requireHumanReviewOnError: false,
     retryPolicy: "exponential",
+    loggingLevel: "info",
+    driftThresholdPct: "10",
+    errorRateThresholdPct: "5",
+    alertChannels: "slack",
   });
 
   const deployWorkflow = useMutation({
@@ -668,6 +672,57 @@ export default function WorkflowEditor() {
                 <option value="linear">Linear</option>
                 <option value="exponential">Exponential</option>
               </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Logging Level</span>
+              <select
+                value={govConfig.loggingLevel}
+                onChange={(e) => setGovConfig((c) => ({ ...c, loggingLevel: e.target.value }))}
+                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
+                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
+              >
+                <option value="debug">Debug</option>
+                <option value="info">Info</option>
+                <option value="warn">Warn</option>
+                <option value="error">Error</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Drift Threshold (%)</span>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                max="100"
+                value={govConfig.driftThresholdPct}
+                onChange={(e) => setGovConfig((c) => ({ ...c, driftThresholdPct: e.target.value }))}
+                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
+                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Error Rate Threshold (%)</span>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                max="100"
+                value={govConfig.errorRateThresholdPct}
+                onChange={(e) => setGovConfig((c) => ({ ...c, errorRateThresholdPct: e.target.value }))}
+                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
+                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Alert Channels</span>
+              <input
+                type="text"
+                value={govConfig.alertChannels}
+                onChange={(e) => setGovConfig((c) => ({ ...c, alertChannels: e.target.value }))}
+                placeholder="slack, email, pagerduty..."
+                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
+                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
+              />
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input

@@ -471,7 +471,7 @@ export default function WorkflowDetail() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-orbitron font-semibold" style={{ color: idx === 0 ? "#00d4ff" : "#e6edf3" }}>
-                          v{v.version}.0
+                          v{v.version}
                         </span>
                         {idx === 0 && (
                           <span
