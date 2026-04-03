@@ -70,6 +70,15 @@ Each phase transition is a human-in-the-loop approval gate.
 | HumanGate | `#607D8B` | Human approval required |
 | Trigger | `#795548` | Workflow trigger |
 
+## Demo Video
+
+- **Video** (`artifacts/promethean-demo/`): Animated product demo video at `/promethean-demo/`
+  - 7-scene looping motion graphics video (~26s total)
+  - Scenes: Brand reveal, Problem visualization, Workflow intake, 4-agent pipeline, Visual editor, Command Center dashboard, Closing lockup
+  - Uses Promethean palette: bg #0a0e14, cyan #00d4ff, Orbitron + JetBrains Mono fonts
+  - Built with React, Framer Motion, Tailwind CSS
+  - Auto-plays and loops seamlessly, no interactivity
+
 ## Vite Proxy
 
 The Vite dev server proxies `/api` → `http://localhost:8080`.

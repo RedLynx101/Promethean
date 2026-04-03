@@ -1,0 +1,31 @@
+kind = "video"
+previewPath = "/promethean-demo/"
+title = "Promethean Demo Video"
+version = "1.0.0"
+id = "artifacts/promethean-demo"
+router = "path"
+
+[[integratedSkills]]
+name = "video-js"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/promethean-demo/" ]
+localPort = 25311
+
+[services.development]
+run = "pnpm --filter @workspace/promethean-demo run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/promethean-demo", "run", "build" ]
+publicDir = "artifacts/promethean-demo/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25311"
+BASE_PATH = "/promethean-demo/"
