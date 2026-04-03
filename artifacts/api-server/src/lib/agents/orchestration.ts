@@ -89,7 +89,7 @@ ${JSON.stringify(edges, null, 2)}
 Enrich with specific tools, error handling, and refined edge conditions.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
+    model: "gpt-5.4-mini-2026-03-17",
     max_completion_tokens: 8192,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },

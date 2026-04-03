@@ -70,7 +70,7 @@ ${JSON.stringify(edges, null, 2)}
 Configure appropriate thresholds, alert channels, and logging based on risk profile.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.2",
+    model: "gpt-5.4-mini-2026-03-17",
     max_completion_tokens: 8192,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
