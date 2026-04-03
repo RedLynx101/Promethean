@@ -70,6 +70,38 @@ export default function WorkflowDetail() {
     queryFn: () => apiFetch(`/workflows/${id}/versions`),
   });
 
+  interface WorkflowAlert {
+    id: string;
+    type: string;
+    severity: string;
+    message: string;
+    status: string;
+    createdAt: string;
+  }
+
+  const { data: alerts = [] } = useQuery<WorkflowAlert[]>({
+    queryKey: ["workflow-alerts", id],
+    queryFn: () => apiFetch(`/alerts?workflowId=${id}`),
+  });
+
+  const ackAlert = useMutation({
+    mutationFn: (alertId: string) =>
+      apiFetch(`/alerts/${alertId}/acknowledge`, { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["workflow-alerts", id] }),
+  });
+
+  const resolveAlert = useMutation({
+    mutationFn: (alertId: string) =>
+      apiFetch(`/alerts/${alertId}/resolve`, { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["workflow-alerts", id] }),
+  });
+
+  const dismissAlert = useMutation({
+    mutationFn: (alertId: string) =>
+      apiFetch(`/alerts/${alertId}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["workflow-alerts", id] }),
+  });
+
   const runWorkflow = useMutation({
     mutationFn: () =>
       apiFetch(`/executions`, {
@@ -298,6 +330,99 @@ export default function WorkflowDetail() {
             )}
           </div>
         </div>
+
+        {/* Alerts Section */}
+        {alerts.length > 0 && (
+          <div
+            className="rounded-xl p-5 mt-5"
+            style={{ background: "#161b22", border: "1px solid rgba(244,67,54,0.15)" }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle className="w-4 h-4" style={{ color: "#F44336" }} />
+              <h2 className="font-orbitron text-sm font-semibold tracking-wider uppercase" style={{ color: "#e6edf3" }}>
+                Active Alerts
+              </h2>
+              <span
+                className="text-xs px-1.5 py-0.5 rounded-full font-jetbrains ml-auto"
+                style={{ background: "rgba(244,67,54,0.12)", color: "#F44336", border: "1px solid rgba(244,67,54,0.25)" }}
+              >
+                {alerts.filter((a) => a.status === "active").length} active
+              </span>
+            </div>
+            <div className="space-y-2">
+              {alerts.map((alert) => {
+                const sev = alert.severity;
+                const sevColor = sev === "critical" ? "#F44336" : sev === "high" ? "#FF9800" : "#FFEB3B";
+                const isResolved = alert.status === "resolved";
+                return (
+                  <div
+                    key={alert.id}
+                    className="flex items-start gap-3 px-3 py-2.5 rounded-lg"
+                    style={{
+                      background: "#0a0e14",
+                      border: `1px solid ${isResolved ? "rgba(255,255,255,0.05)" : `${sevColor}22`}`,
+                      opacity: isResolved ? 0.6 : 1,
+                    }}
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: sevColor }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-jetbrains uppercase font-medium" style={{ color: sevColor }}>
+                          {alert.severity}
+                        </span>
+                        <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.3)" }}>
+                          {alert.type}
+                        </span>
+                        <span
+                          className="text-xs px-1.5 py-0.5 rounded font-jetbrains"
+                          style={{
+                            background: alert.status === "active" ? `${sevColor}15` : "rgba(255,255,255,0.05)",
+                            color: alert.status === "active" ? sevColor : "rgba(230,237,243,0.4)",
+                          }}
+                        >
+                          {alert.status}
+                        </span>
+                      </div>
+                      <p className="text-xs mt-0.5" style={{ color: "rgba(230,237,243,0.65)" }}>
+                        {alert.message}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {alert.status === "active" && (
+                        <button
+                          onClick={() => ackAlert.mutate(alert.id)}
+                          disabled={ackAlert.isPending}
+                          className="text-xs px-2 py-1 rounded font-jetbrains transition-all hover:opacity-80"
+                          style={{ background: "rgba(0,212,255,0.1)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.2)" }}
+                        >
+                          ACK
+                        </button>
+                      )}
+                      {alert.status !== "resolved" && (
+                        <button
+                          onClick={() => resolveAlert.mutate(alert.id)}
+                          disabled={resolveAlert.isPending}
+                          className="text-xs px-2 py-1 rounded font-jetbrains transition-all hover:opacity-80"
+                          style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.2)" }}
+                        >
+                          RESOLVE
+                        </button>
+                      )}
+                      <button
+                        onClick={() => dismissAlert.mutate(alert.id)}
+                        disabled={dismissAlert.isPending}
+                        className="text-xs px-2 py-1 rounded font-jetbrains transition-all hover:opacity-80"
+                        style={{ background: "rgba(255,255,255,0.04)", color: "rgba(230,237,243,0.4)" }}
+                      >
+                        DISMISS
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Version History Timeline */}
         <div

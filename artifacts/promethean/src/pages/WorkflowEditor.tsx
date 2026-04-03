@@ -114,14 +114,43 @@ function buildNodesAndEdges(version: WorkflowVersion | null) {
     };
   });
 
-  const edges = steps.slice(1).map((_, i) => ({
-    id: `e${i}-${i + 1}`,
-    source: `step-${i}`,
-    target: `step-${i + 1}`,
-    type: "smoothstep",
-    markerEnd: { type: MarkerType.ArrowClosed, color: "rgba(0,212,255,0.5)" },
-    style: { stroke: "rgba(0,212,255,0.3)", strokeWidth: 2 },
-  }));
+  const orchestrationEdges: Array<Record<string, unknown>> =
+    (orchestration.edges as Array<Record<string, unknown>>) || [];
+
+  // Edge type color mapping
+  function edgeStyle(edgeType: string | null | undefined): { stroke: string; strokeWidth: number; strokeDasharray?: string } {
+    switch (edgeType) {
+      case "error": return { stroke: "#F44336", strokeWidth: 2, strokeDasharray: "5 3" };
+      case "conditional": return { stroke: "#FF9800", strokeWidth: 2 };
+      case "parallel": return { stroke: "#9C27B0", strokeWidth: 2 };
+      case "fallback": return { stroke: "#E91E63", strokeWidth: 2, strokeDasharray: "8 4" };
+      default: return { stroke: "rgba(0,212,255,0.3)", strokeWidth: 2 };
+    }
+  }
+
+  const edges = orchestrationEdges.length > 0
+    ? orchestrationEdges.map((edge, i) => {
+        const et = edge.type as string | null;
+        return {
+          id: (edge.id as string) ?? `e${i}`,
+          source: (edge.source as string) ?? `step-${i}`,
+          target: (edge.target as string) ?? `step-${i + 1}`,
+          type: "smoothstep",
+          label: et && et !== "sequential" ? et : undefined,
+          labelStyle: { fill: "#e6edf3", fontSize: 9, fontFamily: "'JetBrains Mono'" },
+          labelBgStyle: { fill: "#0a0e14", fillOpacity: 0.8 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: edgeStyle(et).stroke },
+          style: edgeStyle(et),
+        };
+      })
+    : steps.slice(1).map((_, i) => ({
+        id: `e${i}-${i + 1}`,
+        source: `step-${i}`,
+        target: `step-${i + 1}`,
+        type: "smoothstep",
+        markerEnd: { type: MarkerType.ArrowClosed, color: "rgba(0,212,255,0.5)" },
+        style: { stroke: "rgba(0,212,255,0.3)", strokeWidth: 2 },
+      }));
 
   return { nodes, edges };
 }
@@ -169,15 +198,31 @@ export default function WorkflowEditor() {
           nodeCategory: ((node.data as Record<string, unknown>)?.nodeCategory ?? null) as string | null,
         },
       }));
-      const e = (workflowEdges ?? []).map((edge) => ({
-        ...edge,
-        id: edge.id as string,
-        source: edge.source as string,
-        target: edge.target as string,
-        type: "smoothstep",
-        markerEnd: { type: MarkerType.ArrowClosed, color: "rgba(0,212,255,0.5)" },
-        style: { stroke: "rgba(0,212,255,0.3)", strokeWidth: 2 },
-      }));
+      const edgeTypeStyle = (et: string | null | undefined) => {
+        switch (et) {
+          case "error": return { stroke: "#F44336", strokeWidth: 2, strokeDasharray: "5 3" };
+          case "conditional": return { stroke: "#FF9800", strokeWidth: 2 };
+          case "parallel": return { stroke: "#9C27B0", strokeWidth: 2 };
+          case "fallback": return { stroke: "#E91E63", strokeWidth: 2, strokeDasharray: "8 4" };
+          default: return { stroke: "rgba(0,212,255,0.3)", strokeWidth: 2 };
+        }
+      };
+      const e = (workflowEdges ?? []).map((edge) => {
+        const et = edge.edgeType as string | null ?? edge.type as string | null;
+        const style = edgeTypeStyle(et);
+        return {
+          ...edge,
+          id: edge.id as string,
+          source: edge.source as string,
+          target: edge.target as string,
+          type: "smoothstep",
+          label: et && !["sequential", "smoothstep"].includes(et) ? et : undefined,
+          labelStyle: { fill: "#e6edf3", fontSize: 9, fontFamily: "'JetBrains Mono'" },
+          labelBgStyle: { fill: "#0a0e14", fillOpacity: 0.8 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: style.stroke },
+          style,
+        };
+      });
       setNodes(n as Node[]);
       setEdges(e as Edge[]);
     } else if (status.currentVersion) {
@@ -213,6 +258,23 @@ export default function WorkflowEditor() {
 
   const [rejectReason, setRejectReason] = useState("");
   const [showReject, setShowReject] = useState(false);
+  const [showGovConfig, setShowGovConfig] = useState(false);
+  const [govConfig, setGovConfig] = useState({
+    maxCostUsd: "1.00",
+    maxLatencyMs: "5000",
+    alertOnFailure: true,
+    requireHumanReviewOnError: false,
+    retryPolicy: "exponential",
+  });
+
+  const deployWorkflow = useMutation({
+    mutationFn: () =>
+      apiFetch(`/pipeline/${workflowId}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ phase: "govern", governanceConfig: govConfig }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["pipeline-status", workflowId] }),
+  });
 
   const currentPhase = status?.phase ?? "wizard";
   const currentStep = phaseStep(currentPhase);
@@ -292,44 +354,83 @@ export default function WorkflowEditor() {
                 <X className="w-3.5 h-3.5" />
                 Regenerate
               </button>
-              {/* Edit & Approve — opens the editor panel before approving */}
-              <button
-                onClick={() => {
-                  const msg = window.prompt("Optional notes or edits to apply before approving:");
-                  if (msg !== null) {
-                    approvePhase.mutate();
-                  }
-                }}
-                disabled={approvePhase.isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
-                style={{
-                  background: "rgba(0,212,255,0.1)",
-                  border: "1px solid rgba(0,212,255,0.3)",
-                  color: "#00d4ff",
-                }}
-              >
-                <Zap className="w-3.5 h-3.5" />
-                Edit &amp; Approve
-              </button>
-              <button
-                onClick={() => approvePhase.mutate()}
-                disabled={approvePhase.isPending}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
-                style={{
-                  background: "rgba(0,255,136,0.15)",
-                  border: "1px solid rgba(0,255,136,0.4)",
-                  color: "#00ff88",
-                  fontFamily: "'Orbitron', sans-serif",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                {approvePhase.isPending ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Check className="w-3.5 h-3.5" />
-                )}
-                APPROVE
-              </button>
+              {/* Governance config toggle (only for govern phase) */}
+              {currentPhase === "govern" && (
+                <button
+                  onClick={() => setShowGovConfig((v) => !v)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
+                  style={{
+                    background: showGovConfig ? "rgba(255,0,170,0.15)" : "rgba(255,0,170,0.08)",
+                    border: `1px solid rgba(255,0,170,${showGovConfig ? "0.45" : "0.25"})`,
+                    color: "#ff00aa",
+                  }}
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  Gov Config
+                </button>
+              )}
+              {/* Edit & Approve — for non-govern phases */}
+              {currentPhase !== "govern" && (
+                <button
+                  onClick={() => {
+                    const msg = window.prompt("Optional notes or edits to apply before approving:");
+                    if (msg !== null) {
+                      approvePhase.mutate();
+                    }
+                  }}
+                  disabled={approvePhase.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
+                  style={{
+                    background: "rgba(0,212,255,0.1)",
+                    border: "1px solid rgba(0,212,255,0.3)",
+                    color: "#00d4ff",
+                  }}
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  Edit &amp; Approve
+                </button>
+              )}
+              {currentPhase === "govern" ? (
+                <button
+                  onClick={() => deployWorkflow.mutate()}
+                  disabled={deployWorkflow.isPending}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
+                  style={{
+                    background: "rgba(0,255,136,0.18)",
+                    border: "1px solid rgba(0,255,136,0.5)",
+                    color: "#00ff88",
+                    fontFamily: "'Orbitron', sans-serif",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  {deployWorkflow.isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Zap className="w-3.5 h-3.5" />
+                  )}
+                  DEPLOY
+                </button>
+              ) : (
+                <button
+                  onClick={() => approvePhase.mutate()}
+                  disabled={approvePhase.isPending}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
+                  style={{
+                    background: "rgba(0,255,136,0.15)",
+                    border: "1px solid rgba(0,255,136,0.4)",
+                    color: "#00ff88",
+                    fontFamily: "'Orbitron', sans-serif",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  {approvePhase.isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5" />
+                  )}
+                  APPROVE
+                </button>
+              )}
             </>
           )}
           {currentPhase === "deployed" && (
@@ -386,6 +487,78 @@ export default function WorkflowEditor() {
           >
             Cancel
           </button>
+        </div>
+      )}
+
+      {/* Governance Config Panel */}
+      {showGovConfig && currentPhase === "govern" && isPending && (
+        <div
+          className="px-6 py-4 border-b flex-shrink-0"
+          style={{ background: "rgba(255,0,170,0.04)", borderColor: "rgba(255,0,170,0.2)" }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <span className="font-orbitron text-xs font-semibold tracking-wider uppercase" style={{ color: "#ff00aa" }}>
+              Governance Configuration
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Max Cost / Run ($)</span>
+              <input
+                type="number"
+                step="0.01"
+                value={govConfig.maxCostUsd}
+                onChange={(e) => setGovConfig((c) => ({ ...c, maxCostUsd: e.target.value }))}
+                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
+                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Max Latency (ms)</span>
+              <input
+                type="number"
+                step="100"
+                value={govConfig.maxLatencyMs}
+                onChange={(e) => setGovConfig((c) => ({ ...c, maxLatencyMs: e.target.value }))}
+                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
+                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Retry Policy</span>
+              <select
+                value={govConfig.retryPolicy}
+                onChange={(e) => setGovConfig((c) => ({ ...c, retryPolicy: e.target.value }))}
+                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
+                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
+              >
+                <option value="none">None</option>
+                <option value="linear">Linear</option>
+                <option value="exponential">Exponential</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={govConfig.alertOnFailure}
+                onChange={(e) => setGovConfig((c) => ({ ...c, alertOnFailure: e.target.checked }))}
+                className="w-3.5 h-3.5 accent-pink-500"
+              />
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.6)" }}>Alert on Failure</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={govConfig.requireHumanReviewOnError}
+                onChange={(e) => setGovConfig((c) => ({ ...c, requireHumanReviewOnError: e.target.checked }))}
+                className="w-3.5 h-3.5 accent-pink-500"
+              />
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.6)" }}>Require Human Review on Error</span>
+            </label>
+          </div>
+          <p className="text-xs mt-3 font-jetbrains" style={{ color: "rgba(255,0,170,0.5)" }}>
+            These constraints will be enforced at runtime during each workflow execution.
+          </p>
         </div>
       )}
 

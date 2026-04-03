@@ -74,6 +74,26 @@ router.post("/alerts/:id/resolve", async (req, res): Promise<void> => {
   res.json(serializeAlert(alert));
 });
 
+router.delete("/alerts/:id", async (req, res): Promise<void> => {
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  if (!rawId) {
+    res.status(400).json({ error: "Alert id is required" });
+    return;
+  }
+
+  const [deleted] = await db
+    .delete(alertsTable)
+    .where(eq(alertsTable.id, rawId))
+    .returning();
+
+  if (!deleted) {
+    res.status(404).json({ error: "Alert not found" });
+    return;
+  }
+
+  res.json({ success: true, id: rawId });
+});
+
 function serializeAlert(a: Record<string, unknown>) {
   return {
     ...a,

@@ -112,6 +112,80 @@ router.post("/templates/:id/deploy", async (req, res): Promise<void> => {
   });
 });
 
+router.post("/templates", async (req, res): Promise<void> => {
+  const body = req.body as Record<string, unknown>;
+  if (!body?.name || typeof body.name !== "string") {
+    res.status(400).json({ error: "name is required" });
+    return;
+  }
+
+  const [template] = await db.insert(templatesTable).values({
+    name: body.name as string,
+    description: (body.description as string | null) ?? null,
+    domain: (body.domain as string | null) ?? null,
+    tags: Array.isArray(body.tags) ? (body.tags as string[]) : [],
+    nodes: Array.isArray(body.nodes) ? (body.nodes as never[]) : ([] as never[]),
+    edges: Array.isArray(body.edges) ? (body.edges as never[]) : ([] as never[]),
+    isPublic: typeof body.isPublic === "boolean" ? body.isPublic : true,
+    estimatedCostPerRun: body.estimatedCostPerRun != null ? String(body.estimatedCostPerRun) as never : null,
+    estimatedLatencyMs: typeof body.estimatedLatencyMs === "number" ? body.estimatedLatencyMs : null,
+  }).returning();
+
+  res.status(201).json(serializeTemplate(template as unknown as Record<string, unknown>));
+});
+
+router.patch("/templates/:id", async (req, res): Promise<void> => {
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  if (!rawId) {
+    res.status(400).json({ error: "id is required" });
+    return;
+  }
+
+  const [existing] = await db.select().from(templatesTable).where(eq(templatesTable.id, rawId));
+  if (!existing) {
+    res.status(404).json({ error: "Template not found" });
+    return;
+  }
+
+  const body = req.body as Record<string, unknown>;
+  const updateData: Record<string, unknown> = {};
+  if (body.name != null) updateData.name = body.name;
+  if (body.description != null) updateData.description = body.description;
+  if (body.domain != null) updateData.domain = body.domain;
+  if (Array.isArray(body.tags)) updateData.tags = body.tags;
+  if (Array.isArray(body.nodes)) updateData.nodes = body.nodes;
+  if (Array.isArray(body.edges)) updateData.edges = body.edges;
+  if (body.isPublic != null) updateData.isPublic = body.isPublic;
+  if (body.estimatedCostPerRun != null) updateData.estimatedCostPerRun = String(body.estimatedCostPerRun);
+  if (body.estimatedLatencyMs != null) updateData.estimatedLatencyMs = body.estimatedLatencyMs;
+
+  const [updated] = await db.update(templatesTable)
+    .set(updateData as never)
+    .where(eq(templatesTable.id, rawId))
+    .returning();
+
+  res.json(serializeTemplate(updated as unknown as Record<string, unknown>));
+});
+
+router.delete("/templates/:id", async (req, res): Promise<void> => {
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  if (!rawId) {
+    res.status(400).json({ error: "id is required" });
+    return;
+  }
+
+  const [deleted] = await db.delete(templatesTable)
+    .where(eq(templatesTable.id, rawId))
+    .returning();
+
+  if (!deleted) {
+    res.status(404).json({ error: "Template not found" });
+    return;
+  }
+
+  res.json({ success: true, id: rawId });
+});
+
 function serializeTemplate(t: Record<string, unknown>) {
   return {
     ...t,
