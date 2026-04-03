@@ -1,15 +1,38 @@
 import { Router, type IRouter } from "express";
-import { eq, ilike, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@workspace/db";
-import { templatesTable, workflowsTable, type InsertTemplate } from "@workspace/db";
+import { templatesTable, workflowsTable } from "@workspace/db";
 import {
   ListTemplatesQueryParams,
   GetTemplateParams,
   DeployTemplateParams,
   DeployTemplateBody,
+  CreateTemplateBody,
+  UpdateTemplateParams,
+  UpdateTemplateBody,
+  DeleteTemplateParams,
 } from "@workspace/api-zod";
+import type { Template as SelectTemplate } from "@workspace/db";
 
 const router: IRouter = Router();
+
+function serializeTemplate(t: SelectTemplate) {
+  return {
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    domain: t.domain,
+    tags: Array.isArray(t.tags) ? t.tags : [],
+    rating: Number(t.rating ?? 0),
+    usageCount: t.usageCount,
+    estimatedCostPerRun: t.estimatedCostPerRun != null ? Number(t.estimatedCostPerRun) : null,
+    estimatedLatencyMs: t.estimatedLatencyMs,
+    isPublic: t.isPublic,
+    nodes: Array.isArray(t.nodes) ? t.nodes : [],
+    edges: Array.isArray(t.edges) ? t.edges : [],
+    createdAt: t.createdAt.toISOString(),
+  };
+}
 
 router.get("/templates", async (req, res): Promise<void> => {
   const query = ListTemplatesQueryParams.safeParse(req.query);
@@ -21,7 +44,8 @@ router.get("/templates", async (req, res): Promise<void> => {
   let templates = await db.select().from(templatesTable).orderBy(templatesTable.usageCount);
 
   if (query.data.domain) {
-    templates = templates.filter((t) => t.domain === query.data.domain);
+    const d = query.data.domain;
+    templates = templates.filter((t) => t.domain === d);
   }
 
   if (query.data.search) {
@@ -35,8 +59,7 @@ router.get("/templates", async (req, res): Promise<void> => {
 });
 
 router.get("/templates/:id", async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = GetTemplateParams.safeParse({ id: rawId });
+  const params = GetTemplateParams.safeParse({ id: req.params.id });
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
@@ -52,8 +75,7 @@ router.get("/templates/:id", async (req, res): Promise<void> => {
 });
 
 router.post("/templates/:id/deploy", async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = DeployTemplateParams.safeParse({ id: rawId });
+  const params = DeployTemplateParams.safeParse({ id: req.params.id });
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
@@ -71,28 +93,28 @@ router.post("/templates/:id/deploy", async (req, res): Promise<void> => {
     return;
   }
 
-  // Increment usage count
   await db.update(templatesTable)
     .set({ usageCount: template.usageCount + 1 })
     .where(eq(templatesTable.id, template.id));
 
-  // Create workflow from template
+  const defaultGovConfig = {
+    loggingLevel: "standard",
+    autoSnapshot: true,
+    latencyThreshold: 30000,
+    costThreshold: 0.5,
+    errorRateThreshold: 0.05,
+    alertChannels: ["slack"],
+  };
+
   const [workflow] = await db.insert(workflowsTable).values({
     name: parsed.data.name,
     description: parsed.data.description ?? template.description,
     domain: template.domain,
-    tags: template.tags,
-    nodes: template.nodes as unknown,
-    edges: template.edges as unknown,
-    governanceConfig: {
-      loggingLevel: "standard",
-      autoSnapshot: true,
-      latencyThreshold: 30000,
-      costThreshold: 0.5,
-      errorRateThreshold: 0.05,
-      alertChannels: ["slack"],
-    } as unknown,
-    systemTypeSummary: {} as unknown,
+    tags: Array.isArray(template.tags) ? (template.tags as string[]) : [],
+    nodes: Array.isArray(template.nodes) ? template.nodes : [],
+    edges: Array.isArray(template.edges) ? template.edges : [],
+    governanceConfig: defaultGovConfig,
+    systemTypeSummary: {},
     phase: "deployed",
     status: "active",
     estimatedCostPerRun: template.estimatedCostPerRun,
@@ -100,7 +122,12 @@ router.post("/templates/:id/deploy", async (req, res): Promise<void> => {
   }).returning();
 
   res.status(201).json({
-    ...workflow,
+    id: workflow.id,
+    name: workflow.name,
+    description: workflow.description,
+    domain: workflow.domain,
+    status: workflow.status,
+    phase: workflow.phase,
     createdAt: workflow.createdAt.toISOString(),
     updatedAt: workflow.updatedAt.toISOString(),
     estimatedCostPerRun: workflow.estimatedCostPerRun != null ? Number(workflow.estimatedCostPerRun) : null,
@@ -113,66 +140,76 @@ router.post("/templates/:id/deploy", async (req, res): Promise<void> => {
 });
 
 router.post("/templates", async (req, res): Promise<void> => {
-  const body = req.body as Record<string, unknown>;
-  if (!body?.name || typeof body.name !== "string") {
-    res.status(400).json({ error: "name is required" });
+  const parsed = CreateTemplateBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
     return;
   }
 
-  const insertValues: InsertTemplate = {
-    name: body.name as string,
-    description: (body.description as string | null) ?? null,
-    domain: (body.domain as string | null) ?? null,
-    tags: Array.isArray(body.tags) ? (body.tags as string[]) : [],
-    isPublic: typeof body.isPublic === "boolean" ? body.isPublic : true,
-    estimatedCostPerRun: body.estimatedCostPerRun != null ? String(body.estimatedCostPerRun) : null,
-    estimatedLatencyMs: typeof body.estimatedLatencyMs === "number" ? body.estimatedLatencyMs : null,
-  };
-  const [template] = await db.insert(templatesTable).values(insertValues).returning();
+  const [template] = await db.insert(templatesTable).values({
+    name: parsed.data.name,
+    description: parsed.data.description ?? null,
+    domain: parsed.data.domain ?? null,
+    tags: parsed.data.tags,
+    isPublic: parsed.data.isPublic,
+    estimatedCostPerRun: parsed.data.estimatedCostPerRun != null ? String(parsed.data.estimatedCostPerRun) : null,
+    estimatedLatencyMs: parsed.data.estimatedLatencyMs ?? null,
+    nodes: parsed.data.nodes as unknown[],
+    edges: parsed.data.edges as unknown[],
+  }).returning();
 
-  res.status(201).json(serializeTemplate(template as unknown as Record<string, unknown>));
+  res.status(201).json(serializeTemplate(template));
 });
 
 router.patch("/templates/:id", async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  if (!rawId) {
-    res.status(400).json({ error: "id is required" });
+  const params = UpdateTemplateParams.safeParse({ id: req.params.id });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
     return;
   }
 
-  const [existing] = await db.select().from(templatesTable).where(eq(templatesTable.id, rawId));
+  const parsed = UpdateTemplateBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [existing] = await db.select().from(templatesTable).where(eq(templatesTable.id, params.data.id));
   if (!existing) {
     res.status(404).json({ error: "Template not found" });
     return;
   }
 
-  const body = req.body as Record<string, unknown>;
-  const updateData: Partial<InsertTemplate> = {};
-  if (body.name != null) updateData.name = body.name as string;
-  if (body.description != null) updateData.description = body.description as string;
-  if (body.domain != null) updateData.domain = body.domain as string;
-  if (Array.isArray(body.tags)) updateData.tags = body.tags as string[];
-  if (body.isPublic != null) updateData.isPublic = body.isPublic as boolean;
-  if (body.estimatedCostPerRun != null) updateData.estimatedCostPerRun = String(body.estimatedCostPerRun);
-  if (body.estimatedLatencyMs != null) updateData.estimatedLatencyMs = body.estimatedLatencyMs as number;
+  const updateData: Partial<typeof templatesTable.$inferInsert> = {};
+  if (parsed.data.name != null) updateData.name = parsed.data.name;
+  if (parsed.data.description !== undefined) updateData.description = parsed.data.description;
+  if (parsed.data.domain !== undefined) updateData.domain = parsed.data.domain;
+  if (parsed.data.tags != null) updateData.tags = parsed.data.tags;
+  if (parsed.data.isPublic != null) updateData.isPublic = parsed.data.isPublic;
+  if (parsed.data.estimatedCostPerRun !== undefined) {
+    updateData.estimatedCostPerRun = parsed.data.estimatedCostPerRun != null ? String(parsed.data.estimatedCostPerRun) : null;
+  }
+  if (parsed.data.estimatedLatencyMs !== undefined) updateData.estimatedLatencyMs = parsed.data.estimatedLatencyMs;
+  if (parsed.data.nodes != null) updateData.nodes = parsed.data.nodes as unknown[];
+  if (parsed.data.edges != null) updateData.edges = parsed.data.edges as unknown[];
 
   const [updated] = await db.update(templatesTable)
     .set(updateData)
-    .where(eq(templatesTable.id, rawId))
+    .where(eq(templatesTable.id, params.data.id))
     .returning();
 
-  res.json(serializeTemplate(updated as unknown as Record<string, unknown>));
+  res.json(serializeTemplate(updated));
 });
 
 router.delete("/templates/:id", async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  if (!rawId) {
-    res.status(400).json({ error: "id is required" });
+  const params = DeleteTemplateParams.safeParse({ id: req.params.id });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
     return;
   }
 
   const [deleted] = await db.delete(templatesTable)
-    .where(eq(templatesTable.id, rawId))
+    .where(eq(templatesTable.id, params.data.id))
     .returning();
 
   if (!deleted) {
@@ -180,19 +217,7 @@ router.delete("/templates/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json({ success: true, id: rawId });
+  res.json({ success: true, id: params.data.id });
 });
-
-function serializeTemplate(t: Record<string, unknown>) {
-  return {
-    ...t,
-    createdAt: (t.createdAt as Date).toISOString(),
-    rating: Number(t.rating ?? 0),
-    estimatedCostPerRun: t.estimatedCostPerRun != null ? Number(t.estimatedCostPerRun) : null,
-    nodes: Array.isArray(t.nodes) ? t.nodes : [],
-    edges: Array.isArray(t.edges) ? t.edges : [],
-    tags: Array.isArray(t.tags) ? t.tags : [],
-  };
-}
 
 export default router;

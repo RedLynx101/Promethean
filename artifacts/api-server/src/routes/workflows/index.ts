@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { workflowsTable, workflowVersionsTable } from "@workspace/db";
+import type { Workflow } from "@workspace/db";
 import {
   CreateWorkflowBody,
   UpdateWorkflowBody,
@@ -10,9 +11,31 @@ import {
   DeleteWorkflowParams,
   ListWorkflowVersionsParams,
 } from "@workspace/api-zod";
-import { logger } from "../../lib/logger";
 
 const router: IRouter = Router();
+
+function serializeWorkflow(w: Workflow) {
+  return {
+    id: w.id,
+    name: w.name,
+    description: w.description,
+    status: w.status,
+    phase: w.phase,
+    version: w.version,
+    domain: w.domain,
+    tags: Array.isArray(w.tags) ? w.tags : [],
+    nodes: Array.isArray(w.nodes) ? w.nodes : [],
+    edges: Array.isArray(w.edges) ? w.edges : [],
+    systemTypeSummary: (w.systemTypeSummary as Record<string, number>) ?? {},
+    governanceConfig: w.governanceConfig ?? {},
+    workflowBrief: w.workflowBrief,
+    triggerType: w.triggerType,
+    estimatedCostPerRun: w.estimatedCostPerRun != null ? Number(w.estimatedCostPerRun) : null,
+    estimatedLatencyMs: w.estimatedLatencyMs,
+    createdAt: w.createdAt.toISOString(),
+    updatedAt: w.updatedAt.toISOString(),
+  };
+}
 
 router.get("/workflows", async (req, res): Promise<void> => {
   const workflows = await db.select().from(workflowsTable).orderBy(desc(workflowsTable.updatedAt));
@@ -51,8 +74,7 @@ router.post("/workflows", async (req, res): Promise<void> => {
 });
 
 router.get("/workflows/:id", async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = GetWorkflowParams.safeParse({ id: raw });
+  const params = GetWorkflowParams.safeParse({ id: req.params.id });
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
@@ -72,8 +94,7 @@ router.get("/workflows/:id", async (req, res): Promise<void> => {
 });
 
 router.patch("/workflows/:id", async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = UpdateWorkflowParams.safeParse({ id: raw });
+  const params = UpdateWorkflowParams.safeParse({ id: req.params.id });
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
@@ -85,16 +106,16 @@ router.patch("/workflows/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const updateData: Record<string, unknown> = {};
+  const updateData: Partial<typeof workflowsTable.$inferInsert> = {};
   if (parsed.data.name !== undefined) updateData.name = parsed.data.name;
   if (parsed.data.description !== undefined) updateData.description = parsed.data.description;
   if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
-  if (parsed.data.nodes !== undefined) updateData.nodes = parsed.data.nodes;
-  if (parsed.data.edges !== undefined) updateData.edges = parsed.data.edges;
-  if (parsed.data.governanceConfig !== undefined) updateData.governanceConfig = parsed.data.governanceConfig;
+  if (parsed.data.nodes !== undefined) updateData.nodes = parsed.data.nodes as unknown[];
+  if (parsed.data.edges !== undefined) updateData.edges = parsed.data.edges as unknown[];
+  if (parsed.data.governanceConfig !== undefined) updateData.governanceConfig = parsed.data.governanceConfig as Record<string, unknown>;
   if (parsed.data.triggerType !== undefined) updateData.triggerType = parsed.data.triggerType;
   if (parsed.data.domain !== undefined) updateData.domain = parsed.data.domain;
-  if (parsed.data.tags !== undefined) updateData.tags = parsed.data.tags;
+  if (parsed.data.tags !== undefined) updateData.tags = parsed.data.tags as string[];
 
   const [workflow] = await db
     .update(workflowsTable)
@@ -111,8 +132,7 @@ router.patch("/workflows/:id", async (req, res): Promise<void> => {
 });
 
 router.delete("/workflows/:id", async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = DeleteWorkflowParams.safeParse({ id: raw });
+  const params = DeleteWorkflowParams.safeParse({ id: req.params.id });
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
@@ -132,8 +152,7 @@ router.delete("/workflows/:id", async (req, res): Promise<void> => {
 });
 
 router.get("/workflows/:id/versions", async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = ListWorkflowVersionsParams.safeParse({ id: raw });
+  const params = ListWorkflowVersionsParams.safeParse({ id: req.params.id });
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
@@ -146,23 +165,13 @@ router.get("/workflows/:id/versions", async (req, res): Promise<void> => {
     .orderBy(desc(workflowVersionsTable.createdAt));
 
   res.json(versions.map((v) => ({
-    ...v,
+    id: v.id,
+    workflowId: v.workflowId,
+    version: v.version,
+    definition: v.definition,
+    changelog: v.changelog,
     createdAt: v.createdAt.toISOString(),
   })));
 });
-
-function serializeWorkflow(w: Record<string, unknown>) {
-  return {
-    ...w,
-    createdAt: (w.createdAt as Date).toISOString(),
-    updatedAt: (w.updatedAt as Date).toISOString(),
-    estimatedCostPerRun: w.estimatedCostPerRun != null ? Number(w.estimatedCostPerRun) : null,
-    nodes: Array.isArray(w.nodes) ? w.nodes : [],
-    edges: Array.isArray(w.edges) ? w.edges : [],
-    tags: Array.isArray(w.tags) ? w.tags : [],
-    systemTypeSummary: (w.systemTypeSummary as Record<string, number>) ?? {},
-    governanceConfig: w.governanceConfig ?? {},
-  };
-}
 
 export default router;

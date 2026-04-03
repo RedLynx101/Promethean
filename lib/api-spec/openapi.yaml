@@ -323,6 +323,18 @@ paths:
                 estimatedLatencyMs:
                   type: integer
                   nullable: true
+                nodes:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/WorkflowNode"
+                edges:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/WorkflowEdge"
+                governanceConfig:
+                  type: object
+                  nullable: true
+                  additionalProperties: true
       responses:
         "201":
           description: Created template
@@ -392,6 +404,18 @@ paths:
                 estimatedLatencyMs:
                   type: integer
                   nullable: true
+                nodes:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/WorkflowNode"
+                edges:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/WorkflowEdge"
+                governanceConfig:
+                  type: object
+                  nullable: true
+                  additionalProperties: true
       responses:
         "200":
           description: Updated template

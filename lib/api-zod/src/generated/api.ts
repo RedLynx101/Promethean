@@ -996,6 +996,75 @@ export const DeployTemplateBody = zod.object({
   description: zod.string().optional(),
 });
 
+const WorkflowNodeInput = zod.object({
+  id: zod.string(),
+  type: zod.string().optional(),
+  position: zod.object({ x: zod.number(), y: zod.number() }).optional(),
+  data: zod.object({
+    label: zod.string(),
+    description: zod.string().optional().default(""),
+    systemLevel: zod.number().nullish(),
+    confidence: zod.number().nullish(),
+    rationale: zod.string().nullish(),
+    tools: zod.array(zod.string()).optional(),
+    status: zod.string().optional(),
+    nodeCategory: zod.string().nullish(),
+  }).optional(),
+});
+
+const WorkflowEdgeInput = zod.object({
+  id: zod.string(),
+  source: zod.string(),
+  target: zod.string(),
+  type: zod.enum(["default", "conditional", "error", "parallel", "loop"]).optional(),
+  edgeType: zod.string().optional(),
+  data: zod.object({
+    condition: zod.string().nullish(),
+    label: zod.string().nullish(),
+  }).optional(),
+});
+
+/**
+ * @summary Create a new template
+ */
+export const CreateTemplateBody = zod.object({
+  name: zod.string().min(1),
+  description: zod.string().nullish(),
+  domain: zod.string().nullish(),
+  tags: zod.array(zod.string()).optional().default([]),
+  isPublic: zod.boolean().optional().default(true),
+  estimatedCostPerRun: zod.number().nullish(),
+  estimatedLatencyMs: zod.number().int().nullish(),
+  nodes: zod.array(WorkflowNodeInput).optional().default([]),
+  edges: zod.array(WorkflowEdgeInput).optional().default([]),
+});
+
+/**
+ * @summary Update a template
+ */
+export const UpdateTemplateParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateTemplateBody = zod.object({
+  name: zod.string().min(1).optional(),
+  description: zod.string().nullish(),
+  domain: zod.string().nullish(),
+  tags: zod.array(zod.string()).optional(),
+  isPublic: zod.boolean().optional(),
+  estimatedCostPerRun: zod.number().nullish(),
+  estimatedLatencyMs: zod.number().int().nullish(),
+  nodes: zod.array(WorkflowNodeInput).optional(),
+  edges: zod.array(WorkflowEdgeInput).optional(),
+});
+
+/**
+ * @summary Delete a template
+ */
+export const DeleteTemplateParams = zod.object({
+  id: zod.coerce.string(),
+});
+
 /**
  * @summary List recent executions
  */
@@ -1016,6 +1085,14 @@ export const ListExecutionsResponseItem = zod.object({
   totalLatencyMs: zod.number().nullish(),
 });
 export const ListExecutionsResponse = zod.array(ListExecutionsResponseItem);
+
+/**
+ * @summary Create / trigger a workflow execution
+ */
+export const CreateExecutionBody = zod.object({
+  workflowId: zod.string(),
+  inputData: zod.record(zod.unknown()).optional(),
+});
 
 /**
  * @summary Get execution detail with steps
@@ -1112,6 +1189,13 @@ export const ResolveAlertResponse = zod.object({
   createdAt: zod.string(),
   acknowledgedAt: zod.string().nullish(),
   resolvedAt: zod.string().nullish(),
+});
+
+/**
+ * @summary Delete an alert
+ */
+export const DeleteAlertParams = zod.object({
+  id: zod.coerce.string(),
 });
 
 /**

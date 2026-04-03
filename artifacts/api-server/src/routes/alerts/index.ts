@@ -2,13 +2,31 @@ import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { alertsTable } from "@workspace/db";
+import type { Alert } from "@workspace/db";
 import {
   ListAlertsQueryParams,
   AcknowledgeAlertParams,
   ResolveAlertParams,
+  DeleteAlertParams,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+function serializeAlert(a: Alert) {
+  return {
+    id: a.id,
+    workflowId: a.workflowId,
+    alertType: a.alertType,
+    severity: a.severity,
+    title: a.title,
+    description: a.description,
+    evidence: a.evidence,
+    status: a.status,
+    createdAt: a.createdAt.toISOString(),
+    acknowledgedAt: a.acknowledgedAt ? a.acknowledgedAt.toISOString() : null,
+    resolvedAt: a.resolvedAt ? a.resolvedAt.toISOString() : null,
+  };
+}
 
 router.get("/alerts", async (req, res): Promise<void> => {
   const query = ListAlertsQueryParams.safeParse(req.query);
@@ -20,19 +38,20 @@ router.get("/alerts", async (req, res): Promise<void> => {
   let alerts = await db.select().from(alertsTable).orderBy(desc(alertsTable.createdAt));
 
   if (query.data.workflowId) {
-    alerts = alerts.filter((a) => a.workflowId === query.data.workflowId);
+    const wfId = query.data.workflowId;
+    alerts = alerts.filter((a) => a.workflowId === wfId);
   }
 
   if (query.data.status) {
-    alerts = alerts.filter((a) => a.status === query.data.status);
+    const s = query.data.status;
+    alerts = alerts.filter((a) => a.status === s);
   }
 
   res.json(alerts.map(serializeAlert));
 });
 
 router.post("/alerts/:id/acknowledge", async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = AcknowledgeAlertParams.safeParse({ id: rawId });
+  const params = AcknowledgeAlertParams.safeParse({ id: req.params.id });
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
@@ -53,8 +72,7 @@ router.post("/alerts/:id/acknowledge", async (req, res): Promise<void> => {
 });
 
 router.post("/alerts/:id/resolve", async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = ResolveAlertParams.safeParse({ id: rawId });
+  const params = ResolveAlertParams.safeParse({ id: req.params.id });
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
@@ -75,15 +93,15 @@ router.post("/alerts/:id/resolve", async (req, res): Promise<void> => {
 });
 
 router.delete("/alerts/:id", async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  if (!rawId) {
-    res.status(400).json({ error: "Alert id is required" });
+  const params = DeleteAlertParams.safeParse({ id: req.params.id });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
     return;
   }
 
   const [deleted] = await db
     .delete(alertsTable)
-    .where(eq(alertsTable.id, rawId))
+    .where(eq(alertsTable.id, params.data.id))
     .returning();
 
   if (!deleted) {
@@ -91,16 +109,7 @@ router.delete("/alerts/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json({ success: true, id: rawId });
+  res.json({ success: true, id: params.data.id });
 });
-
-function serializeAlert(a: Record<string, unknown>) {
-  return {
-    ...a,
-    createdAt: (a.createdAt as Date).toISOString(),
-    acknowledgedAt: a.acknowledgedAt ? (a.acknowledgedAt as Date).toISOString() : null,
-    resolvedAt: a.resolvedAt ? (a.resolvedAt as Date).toISOString() : null,
-  };
-}
 
 export default router;

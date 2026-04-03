@@ -2,12 +2,50 @@ import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { executionsTable, executionStepsTable, workflowsTable } from "@workspace/db";
+import type { Execution, ExecutionStep } from "@workspace/db";
 import {
   ListExecutionsQueryParams,
+  CreateExecutionBody,
   GetExecutionParams,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+function serializeExecution(e: Execution) {
+  return {
+    id: e.id,
+    workflowId: e.workflowId,
+    workflowVersion: e.workflowVersion,
+    triggeredBy: e.triggeredBy,
+    status: e.status,
+    triggerPayload: e.triggerPayload,
+    result: e.result,
+    error: e.error,
+    startedAt: e.startedAt.toISOString(),
+    completedAt: e.completedAt ? e.completedAt.toISOString() : null,
+    totalCost: e.totalCost != null ? Number(e.totalCost) : null,
+    totalLatencyMs: e.totalLatencyMs,
+  };
+}
+
+function serializeStep(s: ExecutionStep) {
+  return {
+    id: s.id,
+    executionId: s.executionId,
+    stepId: s.stepId,
+    stepName: s.stepName,
+    systemLevel: s.systemLevel,
+    status: s.status,
+    input: s.input,
+    output: s.output,
+    llmCalls: s.llmCalls,
+    toolCalls: s.toolCalls,
+    latencyMs: s.latencyMs,
+    cost: s.cost != null ? Number(s.cost) : null,
+    startedAt: s.startedAt.toISOString(),
+    completedAt: s.completedAt ? s.completedAt.toISOString() : null,
+  };
+}
 
 router.get("/executions", async (req, res): Promise<void> => {
   const query = ListExecutionsQueryParams.safeParse(req.query);
@@ -16,30 +54,27 @@ router.get("/executions", async (req, res): Promise<void> => {
     return;
   }
 
-  let dbQuery = db.select().from(executionsTable).orderBy(desc(executionsTable.startedAt));
-
-  const executions = await dbQuery;
-  let filtered = executions;
+  let executions = await db.select().from(executionsTable).orderBy(desc(executionsTable.startedAt));
 
   if (query.data.workflowId) {
-    filtered = filtered.filter((e) => e.workflowId === query.data.workflowId);
+    const wfId = query.data.workflowId;
+    executions = executions.filter((e) => e.workflowId === wfId);
   }
 
   const limit = query.data.limit ?? 50;
-  filtered = filtered.slice(0, limit);
+  executions = executions.slice(0, limit);
 
-  res.json(filtered.map(serializeExecution));
+  res.json(executions.map(serializeExecution));
 });
 
 router.post("/executions", async (req, res): Promise<void> => {
-  const body = req.body as Record<string, unknown>;
-  const workflowId = typeof body?.workflowId === "string" ? body.workflowId : null;
-  const inputData = body?.inputData as Record<string, unknown> | undefined;
-
-  if (!workflowId) {
-    res.status(400).json({ error: "workflowId is required" });
+  const parsed = CreateExecutionBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
     return;
   }
+
+  const { workflowId, inputData } = parsed.data;
 
   const [workflow] = await db.select().from(workflowsTable).where(eq(workflowsTable.id, workflowId));
   if (!workflow) {
@@ -74,12 +109,11 @@ router.post("/executions", async (req, res): Promise<void> => {
     error: success ? null : { message: "Simulated execution failure" },
   }).returning();
 
-  res.status(201).json(serializeExecution(execution as unknown as Record<string, unknown>));
+  res.status(201).json(serializeExecution(execution));
 });
 
 router.get("/executions/:id", async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = GetExecutionParams.safeParse({ id: rawId });
+  const params = GetExecutionParams.safeParse({ id: req.params.id });
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
@@ -106,23 +140,5 @@ router.get("/executions/:id", async (req, res): Promise<void> => {
     steps: steps.map(serializeStep),
   });
 });
-
-function serializeExecution(e: Record<string, unknown>) {
-  return {
-    ...e,
-    startedAt: (e.startedAt as Date).toISOString(),
-    completedAt: e.completedAt ? (e.completedAt as Date).toISOString() : null,
-    totalCost: e.totalCost != null ? Number(e.totalCost) : null,
-  };
-}
-
-function serializeStep(s: Record<string, unknown>) {
-  return {
-    ...s,
-    startedAt: (s.startedAt as Date).toISOString(),
-    completedAt: s.completedAt ? (s.completedAt as Date).toISOString() : null,
-    cost: s.cost != null ? Number(s.cost) : null,
-  };
-}
 
 export default router;
