@@ -5,7 +5,6 @@ import {
   Workflow,
   Library,
   Plus,
-  Zap,
 } from "lucide-react";
 
 const NAV = [
@@ -27,12 +26,11 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b" style={{ borderColor: "rgba(0, 212, 255, 0.2)" }}>
         <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(0, 212, 255, 0.15)", border: "1px solid rgba(0, 212, 255, 0.4)" }}
-          >
-            <Zap className="w-5 h-5" style={{ color: "#00d4ff" }} />
-          </div>
+          <img
+            src="/favicon.png"
+            alt="Promethean"
+            className="w-9 h-9 rounded-lg object-contain"
+          />
           <div>
             <h1 className="font-orbitron text-base font-bold" style={{ color: "#00d4ff" }}>
               PROMETHEAN
