@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   BarChart2,
   Activity,
+  GitBranch,
 } from "lucide-react";
 import {
   BarChart,
@@ -62,6 +63,11 @@ export default function WorkflowDetail() {
   const { data: executions = [] } = useQuery<Execution[]>({
     queryKey: ["executions", id],
     queryFn: () => apiFetch(`/executions?workflowId=${id}&limit=20`),
+  });
+
+  const { data: versions = [] } = useQuery<Array<{ id: string; version: number; changelog: string; createdAt: string }>>({
+    queryKey: ["workflow-versions", id],
+    queryFn: () => apiFetch(`/workflows/${id}/versions`),
   });
 
   const runWorkflow = useMutation({
@@ -291,6 +297,72 @@ export default function WorkflowDetail() {
               ))
             )}
           </div>
+        </div>
+
+        {/* Version History Timeline */}
+        <div
+          className="rounded-xl p-5 mt-5"
+          style={{ background: "#161b22", border: "1px solid rgba(0,212,255,0.12)" }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <GitBranch className="w-4 h-4" style={{ color: "#00d4ff" }} />
+            <h2 className="font-orbitron text-sm font-semibold tracking-wider uppercase" style={{ color: "#e6edf3" }}>
+              Version History
+            </h2>
+          </div>
+          {versions.length === 0 ? (
+            <div className="flex flex-col items-center py-8 text-center">
+              <GitBranch className="w-7 h-7 mb-2" style={{ color: "rgba(230,237,243,0.15)" }} />
+              <p className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.35)" }}>
+                No versions recorded — deploy the workflow to create v1.0
+              </p>
+            </div>
+          ) : (
+            <div className="relative">
+              <div
+                className="absolute left-3 top-0 bottom-0 w-px"
+                style={{ background: "rgba(0,212,255,0.1)" }}
+              />
+              <div className="space-y-3">
+                {versions.map((v, idx) => (
+                  <div key={v.id} className="relative flex items-start gap-4 pl-8">
+                    <div
+                      className="absolute left-0 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{
+                        background: idx === 0 ? "rgba(0,212,255,0.15)" : "rgba(255,255,255,0.04)",
+                        border: idx === 0 ? "1px solid rgba(0,212,255,0.5)" : "1px solid rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      <span className="text-xs font-jetbrains" style={{ color: idx === 0 ? "#00d4ff" : "rgba(230,237,243,0.4)" }}>
+                        {v.version}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-orbitron font-semibold" style={{ color: idx === 0 ? "#00d4ff" : "#e6edf3" }}>
+                          v{v.version}.0
+                        </span>
+                        {idx === 0 && (
+                          <span
+                            className="text-xs px-1.5 py-0.5 rounded font-jetbrains"
+                            style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.2)" }}
+                          >
+                            CURRENT
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs mt-0.5" style={{ color: "rgba(230,237,243,0.5)" }}>
+                        {v.changelog ?? "No changelog"}
+                      </p>
+                      <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.3)" }}>
+                        {new Date(v.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

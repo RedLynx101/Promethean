@@ -10,6 +10,10 @@ interface Template {
   description: string;
   domain: string;
   tags: string[];
+  rating?: number | null;
+  usageCount?: number | null;
+  estimatedCostPerRun?: number | null;
+  estimatedLatencyMs?: number | null;
   config: {
     steps?: number;
     estimatedCost?: number;
@@ -201,7 +205,26 @@ export default function Templates() {
                         {template.name}
                       </h3>
                     </div>
-                    <Star className="w-4 h-4 flex-shrink-0 ml-2" style={{ color: "rgba(230,237,243,0.2)" }} />
+                    {/* Star rating */}
+                    <div className="flex flex-col items-end gap-0.5 flex-shrink-0 ml-2">
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            className="w-3 h-3"
+                            style={{
+                              color: s <= Math.round(template.rating ?? 0) ? "#FF9800" : "rgba(230,237,243,0.15)",
+                              fill: s <= Math.round(template.rating ?? 0) ? "#FF9800" : "none",
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {template.usageCount != null && (
+                        <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.35)" }}>
+                          {template.usageCount.toLocaleString()} uses
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <p

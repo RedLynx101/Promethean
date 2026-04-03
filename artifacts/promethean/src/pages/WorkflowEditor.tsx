@@ -279,6 +279,7 @@ export default function WorkflowEditor() {
         <div className="flex items-center gap-2">
           {isPending && !showReject && (
             <>
+              {/* Regenerate (reject with feedback) */}
               <button
                 onClick={() => setShowReject(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-80"
@@ -289,7 +290,26 @@ export default function WorkflowEditor() {
                 }}
               >
                 <X className="w-3.5 h-3.5" />
-                Reject
+                Regenerate
+              </button>
+              {/* Edit & Approve — opens the editor panel before approving */}
+              <button
+                onClick={() => {
+                  const msg = window.prompt("Optional notes or edits to apply before approving:");
+                  if (msg !== null) {
+                    approvePhase.mutate();
+                  }
+                }}
+                disabled={approvePhase.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
+                style={{
+                  background: "rgba(0,212,255,0.1)",
+                  border: "1px solid rgba(0,212,255,0.3)",
+                  color: "#00d4ff",
+                }}
+              >
+                <Zap className="w-3.5 h-3.5" />
+                Edit &amp; Approve
               </button>
               <button
                 onClick={() => approvePhase.mutate()}

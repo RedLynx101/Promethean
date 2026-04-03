@@ -58,6 +58,7 @@ router.post("/pipeline/start", async (req, res): Promise<void> => {
     nodes: result.nodes as never,
     edges: result.edges as never,
     phase: "decompose",
+    status: "awaiting_approval",
   }).where(eq(workflowsTable.id, workflowId));
 
   const [updated] = await db.select().from(workflowsTable).where(eq(workflowsTable.id, workflowId));
@@ -131,7 +132,7 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
 
     // Compute system type summary
     const summary: Record<string, number> = {};
-    agentResult.nodes.forEach((n: Record<string, unknown>) => {
+    (agentResult.nodes as unknown as Record<string, unknown>[]).forEach((n) => {
       const level = `L${(n.data as Record<string, unknown>)?.systemLevel ?? 0}`;
       summary[level] = (summary[level] ?? 0) + 1;
     });
@@ -140,6 +141,7 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
       nodes: currentNodes,
       edges: currentEdges,
       phase: "select",
+      status: "awaiting_approval",
       systemTypeSummary: summary as never,
       estimatedCostPerRun: String(agentResult.estimatedCostPerRun ?? 0),
       estimatedLatencyMs: agentResult.estimatedLatencyMs ?? null,
@@ -162,6 +164,7 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
       nodes: currentNodes,
       edges: currentEdges,
       phase: "orchestrate",
+      status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
 
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message };
@@ -182,6 +185,7 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
       edges: currentEdges,
       governanceConfig: agentResult.governanceConfig as never,
       phase: "govern",
+      status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
 
     result = {
@@ -258,6 +262,7 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
     await db.update(workflowsTable).set({
       nodes: agentResult.nodes as never,
       edges: agentResult.edges as never,
+      status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message: agentResult.summary };
 
@@ -266,6 +271,7 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
     await db.update(workflowsTable).set({
       nodes: agentResult.nodes as never,
       edges: agentResult.edges as never,
+      status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message: agentResult.summary };
 
@@ -274,6 +280,7 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
     await db.update(workflowsTable).set({
       nodes: agentResult.nodes as never,
       edges: agentResult.edges as never,
+      status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message: agentResult.summary };
 
@@ -283,6 +290,7 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
       nodes: agentResult.nodes as never,
       edges: agentResult.edges as never,
       governanceConfig: agentResult.governanceConfig as never,
+      status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
     result = {
       nodes: agentResult.nodes,
