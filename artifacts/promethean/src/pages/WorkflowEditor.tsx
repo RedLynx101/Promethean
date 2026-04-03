@@ -117,13 +117,13 @@ function buildNodesAndEdges(version: WorkflowVersion | null) {
   const orchestrationEdges: Array<Record<string, unknown>> =
     (orchestration.edges as Array<Record<string, unknown>>) || [];
 
-  // Edge type color mapping
+  // Edge type color mapping: default | conditional | error | parallel | loop
   function edgeStyle(edgeType: string | null | undefined): { stroke: string; strokeWidth: number; strokeDasharray?: string } {
     switch (edgeType) {
       case "error": return { stroke: "#F44336", strokeWidth: 2, strokeDasharray: "5 3" };
       case "conditional": return { stroke: "#FF9800", strokeWidth: 2 };
       case "parallel": return { stroke: "#9C27B0", strokeWidth: 2 };
-      case "fallback": return { stroke: "#E91E63", strokeWidth: 2, strokeDasharray: "8 4" };
+      case "loop": return { stroke: "#E91E63", strokeWidth: 2, strokeDasharray: "8 4" };
       default: return { stroke: "rgba(0,212,255,0.3)", strokeWidth: 2 };
     }
   }
@@ -136,7 +136,7 @@ function buildNodesAndEdges(version: WorkflowVersion | null) {
           source: (edge.source as string) ?? `step-${i}`,
           target: (edge.target as string) ?? `step-${i + 1}`,
           type: "smoothstep",
-          label: et && et !== "sequential" ? et : undefined,
+          label: et && !["default", "smoothstep"].includes(et) ? et : undefined,
           labelStyle: { fill: "#e6edf3", fontSize: 9, fontFamily: "'JetBrains Mono'" },
           labelBgStyle: { fill: "#0a0e14", fillOpacity: 0.8 },
           markerEnd: { type: MarkerType.ArrowClosed, color: edgeStyle(et).stroke },
@@ -203,7 +203,7 @@ export default function WorkflowEditor() {
           case "error": return { stroke: "#F44336", strokeWidth: 2, strokeDasharray: "5 3" };
           case "conditional": return { stroke: "#FF9800", strokeWidth: 2 };
           case "parallel": return { stroke: "#9C27B0", strokeWidth: 2 };
-          case "fallback": return { stroke: "#E91E63", strokeWidth: 2, strokeDasharray: "8 4" };
+          case "loop": return { stroke: "#E91E63", strokeWidth: 2, strokeDasharray: "8 4" };
           default: return { stroke: "rgba(0,212,255,0.3)", strokeWidth: 2 };
         }
       };
@@ -216,7 +216,7 @@ export default function WorkflowEditor() {
           source: edge.source as string,
           target: edge.target as string,
           type: "smoothstep",
-          label: et && !["sequential", "smoothstep"].includes(et) ? et : undefined,
+          label: et && !["default", "smoothstep"].includes(et) ? et : undefined,
           labelStyle: { fill: "#e6edf3", fontSize: 9, fontFamily: "'JetBrains Mono'" },
           labelBgStyle: { fill: "#0a0e14", fillOpacity: 0.8 },
           markerEnd: { type: MarkerType.ArrowClosed, color: style.stroke },

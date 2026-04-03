@@ -1,6 +1,10 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { type PrometheanNode, type PrometheanEdge, type OrchestrationResult } from "./types";
+import { OrchestrationResultSchema, type PrometheanNodeSchema } from "./schemas";
 import { logger } from "../logger";
+import { z } from "zod";
+
+type NodeType = z.infer<typeof PrometheanNodeSchema>;
 
 const SYSTEM_PROMPT = `You are the Orchestration Agent for Promethean — a workflow analysis and orchestration studio.
 
@@ -97,10 +101,11 @@ Enrich with specific tools, error handling, and refined edge conditions.`;
   const content = response.choices[0]?.message?.content;
   if (!content) throw new Error("No response from orchestration agent");
 
-  const parsed = JSON.parse(content) as OrchestrationResult;
+  const raw = JSON.parse(content);
+  const parsed = OrchestrationResultSchema.parse(raw);
 
   // Preserve original positions if not returned
-  parsed.nodes = parsed.nodes.map((node: PrometheanNode) => {
+  parsed.nodes = parsed.nodes.map((node: NodeType) => {
     const original = nodes.find((n) => n.id === node.id);
     return {
       ...node,

@@ -1,6 +1,10 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { type PrometheanNode, type PrometheanEdge, type GovernanceResult, type GovernanceConfig } from "./types";
+import { type PrometheanNode, type PrometheanEdge, type GovernanceResult } from "./types";
+import { GovernanceResultSchema, type PrometheanNodeSchema } from "./schemas";
 import { logger } from "../logger";
+import { z } from "zod";
+
+type NodeType = z.infer<typeof PrometheanNodeSchema>;
 
 const SYSTEM_PROMPT = `You are the Governance Agent for Promethean — a workflow analysis and orchestration studio.
 
@@ -13,16 +17,17 @@ You must analyze:
 4. Whether human oversight gates are needed
 
 Configure:
-- Logging level: "minimal", "standard", "verbose", "debug"
-- Auto-snapshot: whether to snapshot state at each step
-- Latency threshold (ms): alert if single run exceeds this
-- Cost threshold ($): alert if single run exceeds this
-- Error rate threshold (0-1): alert if error rate exceeds this
-- Alert channels: ["slack", "email", "pagerduty", "webhook"] — choose appropriate ones
-- Cost limit per run: hard limit to abort run
-- Execution timeout ms: maximum allowed run time
+- loggingLevel: "minimal", "standard", "verbose", "debug"
+- autoSnapshot: whether to snapshot state at each step (boolean)
+- latencyThreshold (ms): alert if single run exceeds this (number)
+- costThreshold ($): alert if single run exceeds this (number)
+- errorRateThreshold (0-1): alert if error rate exceeds this (number)
+- alertChannels: array of strings from ["slack", "email", "pagerduty", "webhook"]
+- costLimitPerRun: hard limit to abort run (number)
+- executionTimeoutMs: maximum allowed run time in milliseconds (number)
 
 Also add governance nodes where appropriate (human gate nodes, checkpoint nodes).
+Edge types must be one of: "default", "conditional", "error", "parallel", "loop"
 
 Return ONLY valid JSON:
 {
@@ -77,15 +82,16 @@ Configure appropriate thresholds, alert channels, and logging based on risk prof
   const content = response.choices[0]?.message?.content;
   if (!content) throw new Error("No response from governance agent");
 
-  const parsed = JSON.parse(content) as GovernanceResult;
+  const raw = JSON.parse(content);
+  const parsed = GovernanceResultSchema.parse(raw);
 
   // Use original nodes if governance agent didn't add new ones
   if (!parsed.nodes || parsed.nodes.length === 0) {
-    parsed.nodes = nodes;
-    parsed.edges = edges;
+    parsed.nodes = nodes.map((n) => ({ ...n, data: { ...n.data, status: n.data.status ?? "idle" } }));
+    parsed.edges = edges.map((e) => ({ ...e, type: (e.type ?? "default") as "default" | "conditional" | "error" | "parallel" | "loop" }));
   } else {
     // Preserve original positions
-    parsed.nodes = parsed.nodes.map((node: PrometheanNode) => {
+    parsed.nodes = parsed.nodes.map((node: NodeType) => {
       const original = nodes.find((n) => n.id === node.id);
       return {
         ...node,
@@ -94,20 +100,6 @@ Configure appropriate thresholds, alert channels, and logging based on risk prof
       };
     });
   }
-
-  // Set defaults if missing
-  const defaultConfig: GovernanceConfig = {
-    loggingLevel: "standard",
-    autoSnapshot: true,
-    latencyThreshold: 30000,
-    costThreshold: 0.5,
-    errorRateThreshold: 0.05,
-    alertChannels: ["slack"],
-    costLimitPerRun: 2.0,
-    executionTimeoutMs: 300000,
-  };
-
-  parsed.governanceConfig = { ...defaultConfig, ...parsed.governanceConfig };
 
   return parsed;
 }

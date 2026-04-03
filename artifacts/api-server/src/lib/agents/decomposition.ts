@@ -1,6 +1,11 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { type DecompositionResult, type PrometheanNode, type PrometheanEdge } from "./types";
+import { type DecompositionResult } from "./types";
+import { DecompositionResultSchema, type PrometheanNodeSchema, type PrometheanEdgeSchema } from "./schemas";
 import { logger } from "../logger";
+import { z } from "zod";
+
+type NodeType = z.infer<typeof PrometheanNodeSchema>;
+type EdgeType = z.infer<typeof PrometheanEdgeSchema>;
 
 const SYSTEM_PROMPT = `You are the Decomposition Agent for Promethean — a workflow analysis and orchestration studio.
 
@@ -13,6 +18,7 @@ Rules:
 4. Identify natural dependencies and sequential/parallel flows
 5. Use clear, action-oriented names for each step (verb + noun)
 6. Create logical flow edges connecting the steps
+7. Edge types must be one of: "default", "conditional", "error", "parallel", "loop"
 
 Return ONLY valid JSON matching this exact structure:
 {
@@ -24,7 +30,8 @@ Return ONLY valid JSON matching this exact structure:
       "data": {
         "label": "Step Name",
         "description": "What this step does specifically",
-        "status": "idle"
+        "status": "idle",
+        "nodeCategory": "trigger"
       }
     }
   ],
@@ -44,7 +51,7 @@ Return ONLY valid JSON matching this exact structure:
 }
 
 Position nodes in a logical left-to-right or top-to-bottom layout with 200px spacing between nodes.
-The first node should have type "trigger" in data.nodeCategory.
+The first node should have nodeCategory "trigger" in data.
 Use meaningful IDs like "trigger-1", "validate-input", "notify-team" etc.`;
 
 export async function runDecompositionAgent(
@@ -77,17 +84,18 @@ Decompose this into discrete workflow steps.`;
   const content = response.choices[0]?.message?.content;
   if (!content) throw new Error("No response from decomposition agent");
 
-  const parsed = JSON.parse(content) as DecompositionResult;
+  const raw = JSON.parse(content);
+  const parsed = DecompositionResultSchema.parse(raw);
 
-  // Ensure nodes have proper positions
-  parsed.nodes = parsed.nodes.map((node: PrometheanNode, i: number) => ({
+  // Ensure nodes have proper positions and status
+  parsed.nodes = parsed.nodes.map((node: NodeType, i: number) => ({
     ...node,
     type: "custom",
     position: node.position ?? { x: 100 + (i % 3) * 250, y: 100 + Math.floor(i / 3) * 200 },
-    data: { ...node.data, status: "idle" },
+    data: { ...node.data, status: node.data.status ?? "idle" },
   }));
 
-  parsed.edges = parsed.edges.map((edge: PrometheanEdge) => ({
+  parsed.edges = parsed.edges.map((edge: EdgeType) => ({
     ...edge,
     type: edge.type ?? "default",
     data: edge.data ?? {},

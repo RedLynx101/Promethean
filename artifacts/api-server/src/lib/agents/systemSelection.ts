@@ -1,6 +1,10 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { type PrometheanNode, type PrometheanEdge, type SystemSelectionResult } from "./types";
+import { SystemSelectionResultSchema, type PrometheanNodeSchema } from "./schemas";
 import { logger } from "../logger";
+import { z } from "zod";
+
+type NodeType = z.infer<typeof PrometheanNodeSchema>;
 
 const SYSTEM_PROMPT = `You are the System Selection Agent for Promethean — a workflow analysis and orchestration studio.
 
@@ -20,6 +24,7 @@ Classification Rules (CRITICAL):
 4. Only go to L5 if genuinely multiple independent agents need to collaborate.
 5. Assign a confidence score 0-100 indicating how certain you are of this classification.
 6. Low confidence (<60%) indicates this step needs human review.
+7. Edge types must be one of: "default", "conditional", "error", "parallel", "loop"
 
 Return ONLY valid JSON with this exact structure (keep all original node positions and IDs):
 {
@@ -41,7 +46,6 @@ Return ONLY valid JSON with this exact structure (keep all original node positio
   ],
   "edges": [],
   "summary": "Overall system composition summary",
-  "systemTypeSummary": { "L0": 3, "L1": 1, "L2": 2, "L3": 1 },
   "estimatedCostPerRun": 0.045,
   "estimatedLatencyMs": 2500
 }`;
@@ -82,10 +86,11 @@ For each node, assign systemLevel (0-5), confidence (0-100), and detailed ration
   const content = response.choices[0]?.message?.content;
   if (!content) throw new Error("No response from system selection agent");
 
-  const parsed = JSON.parse(content) as SystemSelectionResult;
+  const raw = JSON.parse(content);
+  const parsed = SystemSelectionResultSchema.parse(raw);
 
   // Preserve original positions if not returned
-  parsed.nodes = parsed.nodes.map((node: PrometheanNode) => {
+  parsed.nodes = parsed.nodes.map((node: NodeType) => {
     const original = nodes.find((n) => n.id === node.id);
     return {
       ...node,
@@ -94,7 +99,15 @@ For each node, assign systemLevel (0-5), confidence (0-100), and detailed ration
     };
   });
 
-  parsed.edges = edges;
+  // Preserve original edges if agent returned none
+  if (parsed.edges.length === 0) {
+    parsed.edges = edges.map((e) => ({ ...e, type: (e.type ?? "default") as "default" | "conditional" | "error" | "parallel" | "loop" }));
+  }
 
-  return parsed;
+  return {
+    ...parsed,
+    systemTypeSummary: {},
+    estimatedCostPerRun: parsed.estimatedCostPerRun ?? 0,
+    estimatedLatencyMs: parsed.estimatedLatencyMs ?? 0,
+  };
 }
