@@ -105,6 +105,14 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
     return;
   }
 
+  // Enforce server-side phase transition validity
+  if (workflow.phase !== phase) {
+    res.status(409).json({
+      error: `Phase mismatch: workflow is in phase "${workflow.phase}" but request targets "${phase}". Refresh and try again.`,
+    });
+    return;
+  }
+
   const editsObj = edits as Record<string, unknown> | undefined;
 
   let currentNodes: PrometheanNode[] = fromJsonb<PrometheanNode[]>(

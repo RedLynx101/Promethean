@@ -642,12 +642,12 @@ export default function WorkflowEditor() {
                       }}
                     >
                       <option value="">Auto</option>
-                      <option value="0">L0 – Local Process</option>
-                      <option value="1">L1 – Cloud SaaS</option>
-                      <option value="2">L2 – ML/AI</option>
-                      <option value="3">L3 – Agent</option>
-                      <option value="4">L4 – Multi-Agent</option>
-                      <option value="5">L5 – Autonomous</option>
+                      <option value="0">L0 – Deterministic</option>
+                      <option value="1">L1 – Supervised ML</option>
+                      <option value="2">L2 – Language Understanding</option>
+                      <option value="3">L3 – Single LLM</option>
+                      <option value="4">L4 – Tool-Augmented</option>
+                      <option value="5">L5 – Multi-Agent</option>
                     </select>
                   </div>
                 );
