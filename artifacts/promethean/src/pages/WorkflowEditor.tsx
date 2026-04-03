@@ -1,0 +1,438 @@
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useParams } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  ReactFlow,
+  Background,
+  BackgroundVariant,
+  Controls,
+  MiniMap,
+  addEdge,
+  useNodesState,
+  useEdgesState,
+  MarkerType,
+  type Connection,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { apiFetch } from "@/lib/api";
+import { PHASES, SYSTEM_LEVEL_COLORS } from "@/lib/constants";
+import PrometheanNode from "@/components/workflow/PrometheanNode";
+import {
+  Check,
+  X,
+  RefreshCw,
+  Zap,
+  AlertTriangle,
+  ChevronRight,
+  Play,
+  Loader2,
+} from "lucide-react";
+
+const nodeTypes = { promethean: PrometheanNode };
+
+interface Workflow {
+  id: string;
+  name: string;
+  description: string;
+  phase: string;
+  status: string;
+  config: Record<string, unknown>;
+}
+
+interface WorkflowVersion {
+  id: string;
+  version: number;
+  phase: string;
+  decomposition: unknown;
+  systemSelection: unknown;
+  orchestrationPlan: unknown;
+  governanceConfig: unknown;
+  humanGates: unknown;
+  currentlyActive: boolean;
+}
+
+interface PipelineStatus {
+  workflowId: string;
+  phase: string;
+  pendingApproval?: boolean;
+  currentVersion?: WorkflowVersion | null;
+  workflow: Workflow & {
+    nodes?: Array<Record<string, unknown>>;
+    edges?: Array<Record<string, unknown>>;
+  };
+}
+
+function phaseStep(phase: string): number {
+  return PHASES.find((p) => p.id === phase)?.step ?? 0;
+}
+
+function buildNodesAndEdges(version: WorkflowVersion | null) {
+  if (!version) return { nodes: [], edges: [] };
+
+  const orchestration = version.orchestrationPlan as Record<string, unknown> | null;
+  if (!orchestration) return { nodes: [], edges: [] };
+
+  const steps: Array<Record<string, unknown>> = (orchestration.steps as Array<Record<string, unknown>>) || [];
+  const systemSel = version.systemSelection as Record<string, unknown> | null;
+  const systemSteps: Array<Record<string, unknown>> = (systemSel?.steps as Array<Record<string, unknown>>) || [];
+
+  const systemByName: Record<string, Record<string, unknown>> = {};
+  systemSteps.forEach((s) => {
+    systemByName[(s.stepName ?? s.name) as string] = s;
+  });
+
+  const COLS = 3;
+  const NODE_W = 260;
+  const NODE_H = 140;
+  const PAD_X = 80;
+  const PAD_Y = 60;
+
+  const nodes = steps.map((step, i) => {
+    const col = i % COLS;
+    const row = Math.floor(i / COLS);
+    const x = col * (NODE_W + PAD_X);
+    const y = row * (NODE_H + PAD_Y);
+    const sysInfo = systemByName[step.name as string] ?? {};
+    const sysLevel = sysInfo.systemLevel ?? step.systemLevel;
+    const tools = (step.tools as string[]) ?? [];
+    return {
+      id: `step-${i}`,
+      type: "promethean",
+      position: { x, y },
+      data: {
+        label: (step.name ?? step.stepName ?? `Step ${i + 1}`) as string,
+        description: (step.description ?? step.action ?? "") as string,
+        systemLevel: (sysLevel ?? null) as number | null,
+        confidence: ((sysInfo.confidence ?? null) as number | null),
+        rationale: (sysInfo.rationale ?? null) as string | null,
+        tools,
+        errorHandling: (step.errorHandling ?? null) as string | null,
+        nodeCategory: (step.nodeCategory ?? null) as string | null,
+      },
+    };
+  });
+
+  const edges = steps.slice(1).map((_, i) => ({
+    id: `e${i}-${i + 1}`,
+    source: `step-${i}`,
+    target: `step-${i + 1}`,
+    type: "smoothstep",
+    markerEnd: { type: MarkerType.ArrowClosed, color: "rgba(0,212,255,0.5)" },
+    style: { stroke: "rgba(0,212,255,0.3)", strokeWidth: 2 },
+  }));
+
+  return { nodes, edges };
+}
+
+export default function WorkflowEditor() {
+  const params = useParams<{ id: string }>();
+  const workflowId = params.id;
+  const qc = useQueryClient();
+
+  const { data: status, isLoading } = useQuery<PipelineStatus>({
+    queryKey: ["pipeline-status", workflowId],
+    queryFn: () => apiFetch(`/pipeline/${workflowId}/status`),
+    refetchInterval: (query) => {
+      const phase = query.state.data?.phase;
+      if (!phase) return 5000;
+      if (["deployed", "wizard"].includes(phase)) return false;
+      if (query.state.data?.pendingApproval) return false;
+      return 5000;
+    },
+  });
+
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+  useEffect(() => {
+    if (!status) return;
+
+    // First try to use workflow nodes/edges if they exist (seeded data)
+    const workflowNodes = status.workflow?.nodes;
+    const workflowEdges = status.workflow?.edges;
+
+    if (workflowNodes && workflowNodes.length > 0) {
+      const n = workflowNodes.map((node) => ({
+        ...node,
+        type: "promethean",
+        id: node.id as string,
+        position: (node.position as { x: number; y: number }) ?? { x: 0, y: 0 },
+        data: {
+          label: ((node.data as Record<string, unknown>)?.label ?? node.id) as string,
+          description: ((node.data as Record<string, unknown>)?.description ?? "") as string,
+          systemLevel: ((node.data as Record<string, unknown>)?.systemLevel ?? null) as number | null,
+          confidence: ((node.data as Record<string, unknown>)?.confidence ?? null) as number | null,
+          tools: ((node.data as Record<string, unknown>)?.tools ?? []) as string[],
+          status: ((node.data as Record<string, unknown>)?.status ?? "idle") as string,
+          nodeCategory: ((node.data as Record<string, unknown>)?.nodeCategory ?? null) as string | null,
+        },
+      }));
+      const e = (workflowEdges ?? []).map((edge) => ({
+        ...edge,
+        id: edge.id as string,
+        source: edge.source as string,
+        target: edge.target as string,
+        type: "smoothstep",
+        markerEnd: { type: MarkerType.ArrowClosed, color: "rgba(0,212,255,0.5)" },
+        style: { stroke: "rgba(0,212,255,0.3)", strokeWidth: 2 },
+      }));
+      setNodes(n as never[]);
+      setEdges(e as never[]);
+    } else if (status.currentVersion) {
+      // Fall back to building from orchestration plan
+      const { nodes: n, edges: e } = buildNodesAndEdges(status.currentVersion);
+      setNodes(n);
+      setEdges(e);
+    }
+  }, [status, setNodes, setEdges]);
+
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges]
+  );
+
+  const approvePhase = useMutation({
+    mutationFn: () => apiFetch(`/pipeline/${workflowId}/approve`, { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["pipeline-status", workflowId] }),
+  });
+
+  const rejectPhase = useMutation({
+    mutationFn: (reason: string) =>
+      apiFetch(`/pipeline/${workflowId}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["pipeline-status", workflowId] }),
+  });
+
+  const [rejectReason, setRejectReason] = useState("");
+  const [showReject, setShowReject] = useState(false);
+
+  const currentPhase = status?.phase ?? "wizard";
+  const currentStep = phaseStep(currentPhase);
+  const isPending = status?.pendingApproval;
+  const isRunning = !isPending && !["wizard", "deployed"].includes(currentPhase);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center" style={{ background: "#0a0e14" }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#00d4ff" }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-screen" style={{ background: "#0a0e14" }}>
+      {/* Top bar */}
+      <div
+        className="flex items-center justify-between px-6 py-3 border-b flex-shrink-0"
+        style={{ background: "#161b22", borderColor: "rgba(0,212,255,0.15)" }}
+      >
+        <div className="flex items-center gap-3">
+          <Zap className="w-5 h-5" style={{ color: "#00d4ff" }} />
+          <h1 className="font-orbitron text-base font-bold" style={{ color: "#e6edf3" }}>
+            {status?.workflow?.name ?? "Workflow Editor"}
+          </h1>
+        </div>
+
+        {/* Pipeline phase tracker */}
+        <div className="flex items-center gap-1">
+          {PHASES.map((phase, i) => {
+            const done = currentStep > phase.step;
+            const active = currentStep === phase.step;
+            return (
+              <div key={phase.id} className="flex items-center">
+                <div
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-jetbrains transition-all"
+                  style={{
+                    background: done
+                      ? "rgba(0,255,136,0.1)"
+                      : active
+                      ? "rgba(0,212,255,0.15)"
+                      : "transparent",
+                    color: done ? "#00ff88" : active ? "#00d4ff" : "rgba(230,237,243,0.3)",
+                    border: active ? "1px solid rgba(0,212,255,0.3)" : "1px solid transparent",
+                  }}
+                >
+                  {done ? <Check className="w-3 h-3" /> : active && isRunning ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                  {phase.label}
+                </div>
+                {i < PHASES.length - 1 && (
+                  <ChevronRight className="w-3 h-3 mx-0.5" style={{ color: "rgba(230,237,243,0.2)" }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
+          {isPending && !showReject && (
+            <>
+              <button
+                onClick={() => setShowReject(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-80"
+                style={{
+                  background: "rgba(244,67,54,0.1)",
+                  border: "1px solid rgba(244,67,54,0.3)",
+                  color: "#F44336",
+                }}
+              >
+                <X className="w-3.5 h-3.5" />
+                Reject
+              </button>
+              <button
+                onClick={() => approvePhase.mutate()}
+                disabled={approvePhase.isPending}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
+                style={{
+                  background: "rgba(0,255,136,0.15)",
+                  border: "1px solid rgba(0,255,136,0.4)",
+                  color: "#00ff88",
+                  fontFamily: "'Orbitron', sans-serif",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                {approvePhase.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Check className="w-3.5 h-3.5" />
+                )}
+                APPROVE
+              </button>
+            </>
+          )}
+          {currentPhase === "deployed" && (
+            <span
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-jetbrains"
+              style={{
+                background: "rgba(0,255,136,0.1)",
+                border: "1px solid rgba(0,255,136,0.3)",
+                color: "#00ff88",
+              }}
+            >
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              DEPLOYED
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Reject panel */}
+      {showReject && (
+        <div
+          className="flex items-center gap-3 px-6 py-3 border-b flex-shrink-0"
+          style={{ background: "rgba(244,67,54,0.05)", borderColor: "rgba(244,67,54,0.2)" }}
+        >
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: "#F44336" }} />
+          <input
+            type="text"
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Reason for rejection (optional)..."
+            className="flex-1 px-3 py-1.5 rounded-lg text-sm outline-none"
+            style={{
+              background: "#0a0e14",
+              border: "1px solid rgba(244,67,54,0.3)",
+              color: "#e6edf3",
+              fontFamily: "Inter",
+            }}
+          />
+          <button
+            onClick={() => {
+              rejectPhase.mutate(rejectReason);
+              setShowReject(false);
+              setRejectReason("");
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs transition-all"
+            style={{ background: "rgba(244,67,54,0.2)", border: "1px solid rgba(244,67,54,0.4)", color: "#F44336" }}
+          >
+            Confirm Reject
+          </button>
+          <button
+            onClick={() => setShowReject(false)}
+            className="px-3 py-1.5 rounded-lg text-xs"
+            style={{ color: "rgba(230,237,243,0.4)" }}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Human gate approval banner */}
+      {isPending && (
+        <div
+          className="flex items-center gap-3 px-6 py-3 border-b flex-shrink-0"
+          style={{
+            background: "rgba(0,212,255,0.05)",
+            borderColor: "rgba(0,212,255,0.2)",
+          }}
+        >
+          <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#00d4ff" }} />
+          <p className="text-sm font-jetbrains" style={{ color: "#00d4ff" }}>
+            <span className="font-bold">Human gate:</span>{" "}
+            Review the {currentPhase} analysis above, then approve or reject to continue the pipeline.
+          </p>
+        </div>
+      )}
+
+      {/* React Flow Canvas */}
+      <div className="flex-1">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.2 }}
+        >
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={24}
+            size={1}
+            color="rgba(0,212,255,0.12)"
+          />
+          <Controls position="bottom-right" />
+          <MiniMap
+            position="bottom-left"
+            nodeColor={(node) => {
+              const d = node.data as { systemLevel?: number; nodeCategory?: string };
+              if (d.nodeCategory === "trigger") return TRIGGER_COLOR;
+              if (d.nodeCategory === "human_gate") return "#607D8B";
+              if (d.systemLevel != null) return SYSTEM_LEVEL_COLORS[d.systemLevel] ?? "#607D8B";
+              return "#607D8B";
+            }}
+            style={{ background: "#161b22", border: "1px solid rgba(0,212,255,0.2)" }}
+          />
+        </ReactFlow>
+      </div>
+
+      {/* Loading overlay when agent is running */}
+      {isRunning && nodes.length === 0 && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div
+            className="rounded-2xl p-8 flex flex-col items-center gap-4"
+            style={{ background: "rgba(22,27,34,0.9)", border: "1px solid rgba(0,212,255,0.3)" }}
+          >
+            <div
+              className="w-16 h-16 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.3)" }}
+            >
+              <Zap className="w-8 h-8 animate-pulse" style={{ color: "#00d4ff" }} />
+            </div>
+            <div className="text-center">
+              <p className="font-orbitron text-sm font-bold mb-1" style={{ color: "#00d4ff" }}>
+                AI AGENTS PROCESSING
+              </p>
+              <p className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>
+                Running {currentPhase} analysis...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

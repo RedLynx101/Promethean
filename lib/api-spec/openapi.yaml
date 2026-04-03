@@ -3,20 +3,32 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Promethean Workflow Studio API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: workflows
+    description: Workflow management
+  - name: pipeline
+    description: Agent pipeline execution
+  - name: templates
+    description: Workflow templates
+  - name: executions
+    description: Workflow execution history
+  - name: alerts
+    description: Drift alerts
+  - name: dashboard
+    description: Dashboard statistics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +36,458 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Workflows ───────────────────────────────────────────────────────────────
+  /workflows:
+    get:
+      operationId: listWorkflows
+      tags: [workflows]
+      summary: List all workflows
+      responses:
+        "200":
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+    post:
+      operationId: createWorkflow
+      tags: [workflows]
+      summary: Create a new workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkflowBody"
+      responses:
+        "201":
+          description: Created workflow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /workflows/{id}:
+    get:
+      operationId: getWorkflow
+      tags: [workflows]
+      summary: Get a workflow by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Workflow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateWorkflow
+      tags: [workflows]
+      summary: Update a workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkflowBody"
+      responses:
+        "200":
+          description: Updated workflow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteWorkflow
+      tags: [workflows]
+      summary: Delete a workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workflows/{id}/versions:
+    get:
+      operationId: listWorkflowVersions
+      tags: [workflows]
+      summary: List version history for a workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of versions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkflowVersion"
+
+  # ─── Pipeline ─────────────────────────────────────────────────────────────────
+  /pipeline/start:
+    post:
+      operationId: startPipeline
+      tags: [pipeline]
+      summary: Start the agent pipeline for a workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartPipelineBody"
+      responses:
+        "200":
+          description: Pipeline started, returns decomposition result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelinePhaseResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pipeline/{workflowId}/approve:
+    post:
+      operationId: approvePhase
+      tags: [pipeline]
+      summary: Approve current pipeline phase and advance to next
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovePhaseBody"
+      responses:
+        "200":
+          description: Phase approved, next phase result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelinePhaseResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pipeline/{workflowId}/reject:
+    post:
+      operationId: rejectPhase
+      tags: [pipeline]
+      summary: Reject current phase and request regeneration
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectPhaseBody"
+      responses:
+        "200":
+          description: Phase rejected, regenerated result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelinePhaseResult"
+
+  /pipeline/{workflowId}/status:
+    get:
+      operationId: getPipelineStatus
+      tags: [pipeline]
+      summary: Get current pipeline status for a workflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Pipeline status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineStatus"
+
+  # ─── Templates ────────────────────────────────────────────────────────────────
+  /templates:
+    get:
+      operationId: listTemplates
+      tags: [templates]
+      summary: List workflow templates
+      parameters:
+        - name: domain
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Template"
+
+  /templates/{id}:
+    get:
+      operationId: getTemplate
+      tags: [templates]
+      summary: Get a template by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /templates/{id}/deploy:
+    post:
+      operationId: deployTemplate
+      tags: [templates]
+      summary: Deploy a template as a new workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeployTemplateBody"
+      responses:
+        "201":
+          description: Created workflow from template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  # ─── Executions ───────────────────────────────────────────────────────────────
+  /executions:
+    get:
+      operationId: listExecutions
+      tags: [executions]
+      summary: List recent executions
+      parameters:
+        - name: workflowId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of executions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Execution"
+
+  /executions/{id}:
+    get:
+      operationId: getExecution
+      tags: [executions]
+      summary: Get execution detail with steps
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Execution detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionDetail"
+
+  # ─── Alerts ───────────────────────────────────────────────────────────────────
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List alerts
+      parameters:
+        - name: workflowId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+
+  /alerts/{id}/acknowledge:
+    post:
+      operationId: acknowledgeAlert
+      tags: [alerts]
+      summary: Acknowledge an alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Acknowledged alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
+  /alerts/{id}/resolve:
+    post:
+      operationId: resolveAlert
+      tags: [alerts]
+      summary: Resolve an alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resolved alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
+  # ─── Dashboard ────────────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/activity:
+    get:
+      operationId: getDashboardActivity
+      tags: [dashboard]
+      summary: Get recent activity timeline
+      parameters:
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Activity data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityPoint"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +498,492 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    # ─── Workflow ──────────────────────────────────────────────────────────────
+    WorkflowNode:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+          required: [x, y]
+        data:
+          type: object
+          properties:
+            label:
+              type: string
+            description:
+              type: string
+            systemLevel:
+              type: ["integer", "null"]
+            confidence:
+              type: ["number", "null"]
+            rationale:
+              type: ["string", "null"]
+            tools:
+              type: array
+              items:
+                type: string
+            status:
+              type: string
+          required: [label, description]
+      required: [id, type, position, data]
+
+    WorkflowEdge:
+      type: object
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+        type:
+          type: string
+        data:
+          type: object
+          properties:
+            condition:
+              type: ["string", "null"]
+            label:
+              type: ["string", "null"]
+      required: [id, source, target, type]
+
+    GovernanceConfig:
+      type: object
+      properties:
+        loggingLevel:
+          type: string
+        autoSnapshot:
+          type: boolean
+        latencyThreshold:
+          type: number
+        costThreshold:
+          type: number
+        errorRateThreshold:
+          type: number
+        alertChannels:
+          type: array
+          items:
+            type: string
+        costLimitPerRun:
+          type: number
+        executionTimeoutMs:
+          type: integer
+      required: [loggingLevel, autoSnapshot, latencyThreshold, costThreshold, errorRateThreshold]
+
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+        phase:
+          type: string
+        version:
+          type: string
+        domain:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowEdge"
+        governanceConfig:
+          $ref: "#/components/schemas/GovernanceConfig"
+        estimatedCostPerRun:
+          type: ["number", "null"]
+        estimatedLatencyMs:
+          type: ["integer", "null"]
+        systemTypeSummary:
+          type: object
+        triggerType:
+          type: ["string", "null"]
+        workflowBrief:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, name, status, phase, version, createdAt, updatedAt, nodes, edges]
+
+    WorkflowVersion:
+      type: object
+      properties:
+        id:
+          type: string
+        workflowId:
+          type: string
+        version:
+          type: string
+        changelog:
+          type: ["string", "null"]
+        definition:
+          type: object
+        createdAt:
+          type: string
+      required: [id, workflowId, version, createdAt, definition]
+
+    CreateWorkflowBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        domain:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required: [name]
+
+    UpdateWorkflowBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowEdge"
+        governanceConfig:
+          $ref: "#/components/schemas/GovernanceConfig"
+        triggerType:
+          type: string
+        domain:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    # ─── Pipeline ─────────────────────────────────────────────────────────────
+    StartPipelineBody:
+      type: object
+      properties:
+        workflowId:
+          type: string
+        description:
+          type: string
+        domain:
+          type: string
+        constraints:
+          type: object
+          properties:
+            budgetPerRun:
+              type: ["number", "null"]
+            latencyRequirement:
+              type: ["string", "null"]
+            riskTolerance:
+              type: ["string", "null"]
+            complianceRequirements:
+              type: ["string", "null"]
+            guardrails:
+              type: ["string", "null"]
+            humanOversightPreference:
+              type: ["string", "null"]
+      required: [workflowId, description]
+
+    ApprovePhaseBody:
+      type: object
+      properties:
+        phase:
+          type: string
+        edits:
+          type: object
+          properties:
+            nodes:
+              type: array
+              items:
+                $ref: "#/components/schemas/WorkflowNode"
+            edges:
+              type: array
+              items:
+                $ref: "#/components/schemas/WorkflowEdge"
+            governanceConfig:
+              $ref: "#/components/schemas/GovernanceConfig"
+      required: [phase]
+
+    RejectPhaseBody:
+      type: object
+      properties:
+        phase:
+          type: string
+        feedback:
+          type: string
+      required: [phase]
+
+    PipelinePhaseResult:
+      type: object
+      properties:
+        workflowId:
+          type: string
+        phase:
+          type: string
+        status:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowEdge"
+        governanceConfig:
+          $ref: "#/components/schemas/GovernanceConfig"
+        message:
+          type: ["string", "null"]
+        workflow:
+          $ref: "#/components/schemas/Workflow"
+      required: [workflowId, phase, status]
+
+    PipelineStatus:
+      type: object
+      properties:
+        workflowId:
+          type: string
+        phase:
+          type: string
+        status:
+          type: string
+        workflow:
+          $ref: "#/components/schemas/Workflow"
+      required: [workflowId, phase, status, workflow]
+
+    # ─── Template ─────────────────────────────────────────────────────────────
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        domain:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+        usageCount:
+          type: integer
+        estimatedCostPerRun:
+          type: ["number", "null"]
+        estimatedLatencyMs:
+          type: ["integer", "null"]
+        isPublic:
+          type: boolean
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowEdge"
+        createdAt:
+          type: string
+      required: [id, name, rating, usageCount, isPublic, createdAt, nodes, edges]
+
+    DeployTemplateBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required: [name]
+
+    # ─── Execution ────────────────────────────────────────────────────────────
+    Execution:
+      type: object
+      properties:
+        id:
+          type: string
+        workflowId:
+          type: string
+        workflowVersion:
+          type: ["string", "null"]
+        triggeredBy:
+          type: string
+        status:
+          type: string
+        startedAt:
+          type: string
+        completedAt:
+          type: ["string", "null"]
+        totalCost:
+          type: ["number", "null"]
+        totalLatencyMs:
+          type: ["integer", "null"]
+      required: [id, workflowId, triggeredBy, status, startedAt]
+
+    ExecutionStep:
+      type: object
+      properties:
+        id:
+          type: string
+        executionId:
+          type: string
+        stepId:
+          type: string
+        stepName:
+          type: string
+        systemLevel:
+          type: ["integer", "null"]
+        status:
+          type: string
+        cost:
+          type: ["number", "null"]
+        latencyMs:
+          type: ["integer", "null"]
+        startedAt:
+          type: string
+        completedAt:
+          type: ["string", "null"]
+      required: [id, executionId, stepId, stepName, status, startedAt]
+
+    ExecutionDetail:
+      type: object
+      properties:
+        execution:
+          $ref: "#/components/schemas/Execution"
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExecutionStep"
+      required: [execution, steps]
+
+    # ─── Alert ────────────────────────────────────────────────────────────────
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+        workflowId:
+          type: string
+        alertType:
+          type: string
+        severity:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+        createdAt:
+          type: string
+        acknowledgedAt:
+          type: ["string", "null"]
+        resolvedAt:
+          type: ["string", "null"]
+      required: [id, workflowId, alertType, severity, title, status, createdAt]
+
+    # ─── Dashboard ────────────────────────────────────────────────────────────
+    WorkflowSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        phase:
+          type: string
+        successRate:
+          type: number
+        lastRunAt:
+          type: ["string", "null"]
+        totalRuns:
+          type: integer
+        activeAlerts:
+          type: integer
+      required: [id, name, status, phase, successRate, totalRuns, activeAlerts]
+
+    DashboardStats:
+      type: object
+      properties:
+        totalWorkflows:
+          type: integer
+        activeWorkflows:
+          type: integer
+        totalExecutions24h:
+          type: integer
+        successRate:
+          type: number
+        avgLatencyMs:
+          type: ["integer", "null"]
+        totalCost24h:
+          type: number
+        activeAlerts:
+          type: integer
+        workflows:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowSummary"
+      required:
+        - totalWorkflows
+        - activeWorkflows
+        - totalExecutions24h
+        - successRate
+        - totalCost24h
+        - activeAlerts
+        - workflows
+
+    ActivityPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        executions:
+          type: integer
+        successes:
+          type: integer
+        failures:
+          type: integer
+        cost:
+          type: number
+      required: [date, executions, successes, failures, cost]

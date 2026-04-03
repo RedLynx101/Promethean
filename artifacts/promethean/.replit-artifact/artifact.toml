@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Promethean Studio"
+version = "1.0.0"
+id = "artifacts/promethean"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25581
+
+[services.development]
+run = "pnpm --filter @workspace/promethean run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/promethean", "run", "build" ]
+publicDir = "artifacts/promethean/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25581"
+BASE_PATH = "/"
