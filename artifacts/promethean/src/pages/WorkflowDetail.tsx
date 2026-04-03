@@ -72,9 +72,10 @@ export default function WorkflowDetail() {
 
   interface WorkflowAlert {
     id: string;
-    type: string;
+    alertType: string;
     severity: string;
-    message: string;
+    title: string;
+    description: string | null;
     status: string;
     createdAt: string;
   }
@@ -371,7 +372,7 @@ export default function WorkflowDetail() {
                           {alert.severity}
                         </span>
                         <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.3)" }}>
-                          {alert.type}
+                          {alert.alertType}
                         </span>
                         <span
                           className="text-xs px-1.5 py-0.5 rounded font-jetbrains"
@@ -383,9 +384,14 @@ export default function WorkflowDetail() {
                           {alert.status}
                         </span>
                       </div>
-                      <p className="text-xs mt-0.5" style={{ color: "rgba(230,237,243,0.65)" }}>
-                        {alert.message}
+                      <p className="text-xs font-medium mt-0.5" style={{ color: "#e6edf3" }}>
+                        {alert.title}
                       </p>
+                      {alert.description && (
+                        <p className="text-xs mt-0.5" style={{ color: "rgba(230,237,243,0.55)" }}>
+                          {alert.description}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {alert.status === "active" && (

@@ -239,10 +239,34 @@ export default function WorkflowEditor() {
   );
 
   const approvePhase = useMutation({
-    mutationFn: () =>
+    mutationFn: (edits?: { notes?: string }) =>
       apiFetch(`/pipeline/${workflowId}/approve`, {
         method: "POST",
-        body: JSON.stringify({ phase: currentPhase }),
+        body: JSON.stringify({
+          phase: currentPhase,
+          edits: {
+            nodes: nodes.map((n) => ({
+              id: n.id,
+              type: n.type ?? "promethean",
+              position: n.position,
+              data: {
+                label: (n.data as { label?: string }).label ?? "",
+                description: (n.data as { description?: string }).description ?? "",
+                systemLevel: (n.data as { systemLevel?: number | null }).systemLevel ?? null,
+                confidence: (n.data as { confidence?: number | null }).confidence ?? null,
+                tools: (n.data as { tools?: string[] }).tools ?? [],
+                nodeCategory: (n.data as { nodeCategory?: string | null }).nodeCategory ?? null,
+              },
+            })),
+            edges: edges.map((e) => ({
+              id: e.id,
+              source: e.source,
+              target: e.target,
+              type: e.type ?? "smoothstep",
+            })),
+            notes: edits?.notes,
+          },
+        }),
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["pipeline-status", workflowId] }),
   });
@@ -271,7 +295,37 @@ export default function WorkflowEditor() {
     mutationFn: () =>
       apiFetch(`/pipeline/${workflowId}/approve`, {
         method: "POST",
-        body: JSON.stringify({ phase: "govern", governanceConfig: govConfig }),
+        body: JSON.stringify({
+          phase: "govern",
+          edits: {
+            governanceConfig: {
+              maxCostUsd: parseFloat(govConfig.maxCostUsd),
+              maxLatencyMs: parseInt(govConfig.maxLatencyMs, 10),
+              alertOnFailure: govConfig.alertOnFailure,
+              requireHumanReviewOnError: govConfig.requireHumanReviewOnError,
+              retryPolicy: govConfig.retryPolicy,
+            },
+            nodes: nodes.map((n) => ({
+              id: n.id,
+              type: n.type ?? "promethean",
+              position: n.position,
+              data: {
+                label: (n.data as { label?: string }).label ?? "",
+                description: (n.data as { description?: string }).description ?? "",
+                systemLevel: (n.data as { systemLevel?: number | null }).systemLevel ?? null,
+                confidence: (n.data as { confidence?: number | null }).confidence ?? null,
+                tools: (n.data as { tools?: string[] }).tools ?? [],
+                nodeCategory: (n.data as { nodeCategory?: string | null }).nodeCategory ?? null,
+              },
+            })),
+            edges: edges.map((e) => ({
+              id: e.id,
+              source: e.source,
+              target: e.target,
+              type: e.type ?? "smoothstep",
+            })),
+          },
+        }),
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["pipeline-status", workflowId] }),
   });
@@ -373,9 +427,9 @@ export default function WorkflowEditor() {
               {currentPhase !== "govern" && (
                 <button
                   onClick={() => {
-                    const msg = window.prompt("Optional notes or edits to apply before approving:");
-                    if (msg !== null) {
-                      approvePhase.mutate();
+                    const notes = window.prompt("Optional notes to send with this approval:");
+                    if (notes !== null) {
+                      approvePhase.mutate({ notes: notes || undefined });
                     }
                   }}
                   disabled={approvePhase.isPending}
@@ -412,7 +466,7 @@ export default function WorkflowEditor() {
                 </button>
               ) : (
                 <button
-                  onClick={() => approvePhase.mutate()}
+                  onClick={() => approvePhase.mutate({})}
                   disabled={approvePhase.isPending}
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90"
                   style={{
@@ -487,6 +541,84 @@ export default function WorkflowEditor() {
           >
             Cancel
           </button>
+        </div>
+      )}
+
+      {/* System Level Override Panel — shown at Gate 2 (system_selection) */}
+      {currentPhase === "system_selection" && isPending && nodes.length > 0 && (
+        <div
+          className="px-6 py-4 border-b flex-shrink-0 overflow-x-auto"
+          style={{ background: "rgba(33,150,243,0.04)", borderColor: "rgba(33,150,243,0.2)" }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <span className="font-orbitron text-xs font-semibold tracking-wider uppercase" style={{ color: "#2196F3" }}>
+              L0–L5 Classification Override
+            </span>
+            <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.35)" }}>
+              Adjust AI-assigned system levels before approving
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {nodes
+              .filter((n) => {
+                const d = n.data as { nodeCategory?: string | null };
+                return d.nodeCategory !== "trigger" && d.nodeCategory !== "human_gate";
+              })
+              .map((n) => {
+                const d = n.data as { label?: string; systemLevel?: number | null };
+                return (
+                  <div
+                    key={n.id}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
+                    style={{ background: "#0a0e14", border: "1px solid rgba(33,150,243,0.2)" }}
+                  >
+                    <span className="text-xs font-jetbrains max-w-[120px] truncate" style={{ color: "#e6edf3" }}>
+                      {d.label ?? n.id}
+                    </span>
+                    <select
+                      value={d.systemLevel ?? ""}
+                      onChange={(e) => {
+                        const level = e.target.value === "" ? null : parseInt(e.target.value, 10);
+                        setNodes((prev) =>
+                          prev.map((node) =>
+                            node.id === n.id
+                              ? { ...node, data: { ...node.data, systemLevel: level } }
+                              : node
+                          )
+                        );
+                      }}
+                      className="text-xs px-1.5 py-0.5 rounded outline-none font-jetbrains"
+                      style={{
+                        background: "#161b22",
+                        border: "1px solid rgba(33,150,243,0.25)",
+                        color:
+                          d.systemLevel === 0
+                            ? "#4CAF50"
+                            : d.systemLevel === 1
+                            ? "#2196F3"
+                            : d.systemLevel === 2
+                            ? "#9C27B0"
+                            : d.systemLevel === 3
+                            ? "#FF9800"
+                            : d.systemLevel === 4
+                            ? "#F44336"
+                            : d.systemLevel === 5
+                            ? "#E91E63"
+                            : "rgba(230,237,243,0.5)",
+                      }}
+                    >
+                      <option value="">Auto</option>
+                      <option value="0">L0 – Local Process</option>
+                      <option value="1">L1 – Cloud SaaS</option>
+                      <option value="2">L2 – ML/AI</option>
+                      <option value="3">L3 – Agent</option>
+                      <option value="4">L4 – Multi-Agent</option>
+                      <option value="5">L5 – Autonomous</option>
+                    </select>
+                  </div>
+                );
+              })}
+          </div>
         </div>
       )}
 
