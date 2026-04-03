@@ -15,6 +15,7 @@ import { runSystemSelectionAgent } from "../../lib/agents/systemSelection";
 import { runOrchestrationAgent } from "../../lib/agents/orchestration";
 import { runGovernanceAgent } from "../../lib/agents/governance";
 import type { PrometheanNode, PrometheanEdge, GovernanceConfig } from "../../lib/agents/types";
+import { VALID_EDGE_TYPES } from "../../lib/agents/schemas";
 
 const router: IRouter = Router();
 
@@ -114,6 +115,19 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
   );
   const currentGovernance: GovernanceConfig | Record<string, unknown> =
     fromJsonb<GovernanceConfig>(editsObj?.governanceConfig ?? workflow.governanceConfig);
+
+  // Validate incoming edited edges: coerce unknown types to "default", reject unknown if strict
+  if (editsObj?.edges) {
+    const invalidEdges = currentEdges.filter(
+      (e) => e.type && !VALID_EDGE_TYPES.includes(e.type as typeof VALID_EDGE_TYPES[number])
+    );
+    if (invalidEdges.length > 0) {
+      res.status(400).json({
+        error: `Invalid edge type(s): ${invalidEdges.map((e) => `${e.id}:${e.type}`).join(", ")}. Allowed: ${VALID_EDGE_TYPES.join(", ")}`,
+      });
+      return;
+    }
+  }
 
   if (edits) {
     await db.update(workflowsTable).set({

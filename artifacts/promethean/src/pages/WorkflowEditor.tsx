@@ -30,6 +30,24 @@ import {
 
 const nodeTypes = { promethean: PrometheanNode };
 
+const CANONICAL_EDGE_TYPES = ["default", "conditional", "error", "parallel", "loop"] as const;
+type CanonicalEdgeType = typeof CANONICAL_EDGE_TYPES[number];
+
+function toCanonicalEdgeType(edge: Edge): CanonicalEdgeType {
+  const candidates = [
+    (edge as Record<string, unknown>).edgeType,
+    (edge.data as Record<string, unknown> | undefined)?.edgeType,
+    (edge.data as Record<string, unknown> | undefined)?.type,
+    edge.type,
+  ];
+  for (const c of candidates) {
+    if (typeof c === "string" && CANONICAL_EDGE_TYPES.includes(c as CanonicalEdgeType)) {
+      return c as CanonicalEdgeType;
+    }
+  }
+  return "default";
+}
+
 interface Workflow {
   id: string;
   name: string;
@@ -258,14 +276,17 @@ export default function WorkflowEditor() {
                 nodeCategory: (n.data as { nodeCategory?: string | null }).nodeCategory ?? null,
               },
             })),
-            edges: edges.map((e) => ({
-              id: e.id,
-              source: e.source,
-              target: e.target,
-              type: "smoothstep",
-              edgeType: (e as { edgeType?: string }).edgeType ?? (e.data as { edgeType?: string } | undefined)?.edgeType ?? "sequential",
-              data: e.data ?? {},
-            })),
+            edges: edges.map((e) => {
+              const canonical = toCanonicalEdgeType(e);
+              return {
+                id: e.id,
+                source: e.source,
+                target: e.target,
+                type: canonical,
+                edgeType: canonical,
+                data: e.data ?? {},
+              };
+            }),
             notes: edits?.notes,
           },
         }),
@@ -326,14 +347,17 @@ export default function WorkflowEditor() {
                 nodeCategory: (n.data as { nodeCategory?: string | null }).nodeCategory ?? null,
               },
             })),
-            edges: edges.map((e) => ({
-              id: e.id,
-              source: e.source,
-              target: e.target,
-              type: "smoothstep",
-              edgeType: (e as { edgeType?: string }).edgeType ?? (e.data as { edgeType?: string } | undefined)?.edgeType ?? "sequential",
-              data: e.data ?? {},
-            })),
+            edges: edges.map((e) => {
+              const canonical = toCanonicalEdgeType(e);
+              return {
+                id: e.id,
+                source: e.source,
+                target: e.target,
+                type: canonical,
+                edgeType: canonical,
+                data: e.data ?? {},
+              };
+            }),
           },
         }),
       }),
