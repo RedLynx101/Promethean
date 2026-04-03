@@ -711,6 +711,8 @@ components:
                 type: string
             status:
               type: string
+            nodeCategory:
+              type: ["string", "null"]
           required: [label, description]
       required: [id, type, position, data]
 
@@ -725,12 +727,16 @@ components:
           type: string
         type:
           type: string
+        edgeType:
+          type: string
         data:
           type: object
           properties:
             condition:
               type: ["string", "null"]
             label:
+              type: ["string", "null"]
+            edgeType:
               type: ["string", "null"]
       required: [id, source, target, type]
 

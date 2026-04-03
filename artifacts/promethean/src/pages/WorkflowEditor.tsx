@@ -286,15 +286,14 @@ export default function WorkflowEditor() {
   const [showReject, setShowReject] = useState(false);
   const [showGovConfig, setShowGovConfig] = useState(false);
   const [govConfig, setGovConfig] = useState({
-    maxCostUsd: "1.00",
-    maxLatencyMs: "5000",
-    alertOnFailure: true,
-    requireHumanReviewOnError: false,
-    retryPolicy: "exponential",
     loggingLevel: "info",
-    driftThresholdPct: "10",
-    errorRateThresholdPct: "5",
-    alertChannels: "slack",
+    autoSnapshot: true,
+    latencyThreshold: 5000,
+    costThreshold: 1.0,
+    errorRateThreshold: 0.05,
+    alertChannels: ["slack"],
+    costLimitPerRun: 1.0,
+    executionTimeoutMs: 30000,
   });
 
   const deployWorkflow = useMutation({
@@ -305,11 +304,14 @@ export default function WorkflowEditor() {
           phase: "govern",
           edits: {
             governanceConfig: {
-              maxCostUsd: parseFloat(govConfig.maxCostUsd),
-              maxLatencyMs: parseInt(govConfig.maxLatencyMs, 10),
-              alertOnFailure: govConfig.alertOnFailure,
-              requireHumanReviewOnError: govConfig.requireHumanReviewOnError,
-              retryPolicy: govConfig.retryPolicy,
+              loggingLevel: govConfig.loggingLevel,
+              autoSnapshot: govConfig.autoSnapshot,
+              latencyThreshold: govConfig.latencyThreshold,
+              costThreshold: govConfig.costThreshold,
+              errorRateThreshold: govConfig.errorRateThreshold,
+              alertChannels: govConfig.alertChannels,
+              costLimitPerRun: govConfig.costLimitPerRun,
+              executionTimeoutMs: govConfig.executionTimeoutMs,
             },
             nodes: nodes.map((n) => ({
               id: n.id,
@@ -643,41 +645,6 @@ export default function WorkflowEditor() {
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             <label className="flex flex-col gap-1">
-              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Max Cost / Run ($)</span>
-              <input
-                type="number"
-                step="0.01"
-                value={govConfig.maxCostUsd}
-                onChange={(e) => setGovConfig((c) => ({ ...c, maxCostUsd: e.target.value }))}
-                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
-                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Max Latency (ms)</span>
-              <input
-                type="number"
-                step="100"
-                value={govConfig.maxLatencyMs}
-                onChange={(e) => setGovConfig((c) => ({ ...c, maxLatencyMs: e.target.value }))}
-                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
-                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Retry Policy</span>
-              <select
-                value={govConfig.retryPolicy}
-                onChange={(e) => setGovConfig((c) => ({ ...c, retryPolicy: e.target.value }))}
-                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
-                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
-              >
-                <option value="none">None</option>
-                <option value="linear">Linear</option>
-                <option value="exponential">Exponential</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1">
               <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Logging Level</span>
               <select
                 value={govConfig.loggingLevel}
@@ -692,27 +659,62 @@ export default function WorkflowEditor() {
               </select>
             </label>
             <label className="flex flex-col gap-1">
-              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Drift Threshold (%)</span>
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Latency Threshold (ms)</span>
               <input
                 type="number"
-                step="1"
+                step="500"
                 min="0"
-                max="100"
-                value={govConfig.driftThresholdPct}
-                onChange={(e) => setGovConfig((c) => ({ ...c, driftThresholdPct: e.target.value }))}
+                value={govConfig.latencyThreshold}
+                onChange={(e) => setGovConfig((c) => ({ ...c, latencyThreshold: Number(e.target.value) }))}
                 className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
                 style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
               />
             </label>
             <label className="flex flex-col gap-1">
-              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Error Rate Threshold (%)</span>
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Cost Threshold ($)</span>
               <input
                 type="number"
-                step="1"
+                step="0.01"
                 min="0"
-                max="100"
-                value={govConfig.errorRateThresholdPct}
-                onChange={(e) => setGovConfig((c) => ({ ...c, errorRateThresholdPct: e.target.value }))}
+                value={govConfig.costThreshold}
+                onChange={(e) => setGovConfig((c) => ({ ...c, costThreshold: Number(e.target.value) }))}
+                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
+                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Error Rate Threshold (0–1)</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max="1"
+                value={govConfig.errorRateThreshold}
+                onChange={(e) => setGovConfig((c) => ({ ...c, errorRateThreshold: Number(e.target.value) }))}
+                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
+                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Cost Limit / Run ($)</span>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                value={govConfig.costLimitPerRun}
+                onChange={(e) => setGovConfig((c) => ({ ...c, costLimitPerRun: Number(e.target.value) }))}
+                className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
+                style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Execution Timeout (ms)</span>
+              <input
+                type="number"
+                step="5000"
+                min="0"
+                value={govConfig.executionTimeoutMs}
+                onChange={(e) => setGovConfig((c) => ({ ...c, executionTimeoutMs: Number(e.target.value) }))}
                 className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
                 style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
               />
@@ -721,30 +723,24 @@ export default function WorkflowEditor() {
               <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.5)" }}>Alert Channels</span>
               <input
                 type="text"
-                value={govConfig.alertChannels}
-                onChange={(e) => setGovConfig((c) => ({ ...c, alertChannels: e.target.value }))}
+                value={govConfig.alertChannels.join(", ")}
+                onChange={(e) => setGovConfig((c) => ({
+                  ...c,
+                  alertChannels: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                }))}
                 placeholder="slack, email, pagerduty..."
                 className="px-2 py-1.5 rounded text-sm outline-none font-jetbrains"
                 style={{ background: "#0a0e14", border: "1px solid rgba(255,0,170,0.25)", color: "#e6edf3" }}
               />
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer col-span-2">
               <input
                 type="checkbox"
-                checked={govConfig.alertOnFailure}
-                onChange={(e) => setGovConfig((c) => ({ ...c, alertOnFailure: e.target.checked }))}
+                checked={govConfig.autoSnapshot}
+                onChange={(e) => setGovConfig((c) => ({ ...c, autoSnapshot: e.target.checked }))}
                 className="w-3.5 h-3.5 accent-pink-500"
               />
-              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.6)" }}>Alert on Failure</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={govConfig.requireHumanReviewOnError}
-                onChange={(e) => setGovConfig((c) => ({ ...c, requireHumanReviewOnError: e.target.checked }))}
-                className="w-3.5 h-3.5 accent-pink-500"
-              />
-              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.6)" }}>Require Human Review on Error</span>
+              <span className="text-xs font-jetbrains" style={{ color: "rgba(230,237,243,0.6)" }}>Auto-snapshot on Deploy</span>
             </label>
           </div>
           <p className="text-xs mt-3 font-jetbrains" style={{ color: "rgba(255,0,170,0.5)" }}>

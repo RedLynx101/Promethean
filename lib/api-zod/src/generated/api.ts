@@ -42,6 +42,7 @@ export const ListWorkflowsResponseItem = zod.object({
         rationale: zod.string().nullish(),
         tools: zod.array(zod.string()).optional(),
         status: zod.string().optional(),
+        nodeCategory: zod.string().nullish(),
       }),
     }),
   ),
@@ -51,6 +52,7 @@ export const ListWorkflowsResponseItem = zod.object({
       source: zod.string(),
       target: zod.string(),
       type: zod.string(),
+      edgeType: zod.string().optional(),
       data: zod
         .object({
           condition: zod.string().nullish(),
@@ -123,6 +125,7 @@ export const GetWorkflowResponse = zod.object({
         rationale: zod.string().nullish(),
         tools: zod.array(zod.string()).optional(),
         status: zod.string().optional(),
+        nodeCategory: zod.string().nullish(),
       }),
     }),
   ),
@@ -132,6 +135,7 @@ export const GetWorkflowResponse = zod.object({
       source: zod.string(),
       target: zod.string(),
       type: zod.string(),
+      edgeType: zod.string().optional(),
       data: zod
         .object({
           condition: zod.string().nullish(),
@@ -189,6 +193,7 @@ export const UpdateWorkflowBody = zod.object({
           rationale: zod.string().nullish(),
           tools: zod.array(zod.string()).optional(),
           status: zod.string().optional(),
+          nodeCategory: zod.string().nullish(),
         }),
       }),
     )
@@ -200,6 +205,7 @@ export const UpdateWorkflowBody = zod.object({
         source: zod.string(),
         target: zod.string(),
         type: zod.string(),
+        edgeType: zod.string().optional(),
         data: zod
           .object({
             condition: zod.string().nullish(),
@@ -251,6 +257,7 @@ export const UpdateWorkflowResponse = zod.object({
         rationale: zod.string().nullish(),
         tools: zod.array(zod.string()).optional(),
         status: zod.string().optional(),
+        nodeCategory: zod.string().nullish(),
       }),
     }),
   ),
@@ -260,6 +267,7 @@ export const UpdateWorkflowResponse = zod.object({
       source: zod.string(),
       target: zod.string(),
       type: zod.string(),
+      edgeType: zod.string().optional(),
       data: zod
         .object({
           condition: zod.string().nullish(),
@@ -355,6 +363,7 @@ export const StartPipelineResponse = zod.object({
           rationale: zod.string().nullish(),
           tools: zod.array(zod.string()).optional(),
           status: zod.string().optional(),
+          nodeCategory: zod.string().nullish(),
         }),
       }),
     )
@@ -366,6 +375,7 @@ export const StartPipelineResponse = zod.object({
         source: zod.string(),
         target: zod.string(),
         type: zod.string(),
+        edgeType: zod.string().optional(),
         data: zod
           .object({
             condition: zod.string().nullish(),
@@ -414,6 +424,7 @@ export const StartPipelineResponse = zod.object({
             rationale: zod.string().nullish(),
             tools: zod.array(zod.string()).optional(),
             status: zod.string().optional(),
+            nodeCategory: zod.string().nullish(),
           }),
         }),
       ),
@@ -423,6 +434,7 @@ export const StartPipelineResponse = zod.object({
           source: zod.string(),
           target: zod.string(),
           type: zod.string(),
+          edgeType: zod.string().optional(),
           data: zod
             .object({
               condition: zod.string().nullish(),
@@ -482,6 +494,7 @@ export const ApprovePhaseBody = zod.object({
               rationale: zod.string().nullish(),
               tools: zod.array(zod.string()).optional(),
               status: zod.string().optional(),
+              nodeCategory: zod.string().nullish(),
             }),
           }),
         )
@@ -493,10 +506,12 @@ export const ApprovePhaseBody = zod.object({
             source: zod.string(),
             target: zod.string(),
             type: zod.string(),
+            edgeType: zod.string().optional(),
             data: zod
               .object({
                 condition: zod.string().nullish(),
                 label: zod.string().nullish(),
+                edgeType: zod.string().nullish(),
               })
               .optional(),
           }),
@@ -539,6 +554,7 @@ export const ApprovePhaseResponse = zod.object({
           rationale: zod.string().nullish(),
           tools: zod.array(zod.string()).optional(),
           status: zod.string().optional(),
+          nodeCategory: zod.string().nullish(),
         }),
       }),
     )
@@ -550,6 +566,7 @@ export const ApprovePhaseResponse = zod.object({
         source: zod.string(),
         target: zod.string(),
         type: zod.string(),
+        edgeType: zod.string().optional(),
         data: zod
           .object({
             condition: zod.string().nullish(),
@@ -598,6 +615,7 @@ export const ApprovePhaseResponse = zod.object({
             rationale: zod.string().nullish(),
             tools: zod.array(zod.string()).optional(),
             status: zod.string().optional(),
+            nodeCategory: zod.string().nullish(),
           }),
         }),
       ),
@@ -607,6 +625,7 @@ export const ApprovePhaseResponse = zod.object({
           source: zod.string(),
           target: zod.string(),
           type: zod.string(),
+          edgeType: zod.string().optional(),
           data: zod
             .object({
               condition: zod.string().nullish(),
@@ -671,6 +690,7 @@ export const RejectPhaseResponse = zod.object({
           rationale: zod.string().nullish(),
           tools: zod.array(zod.string()).optional(),
           status: zod.string().optional(),
+          nodeCategory: zod.string().nullish(),
         }),
       }),
     )
@@ -682,6 +702,7 @@ export const RejectPhaseResponse = zod.object({
         source: zod.string(),
         target: zod.string(),
         type: zod.string(),
+        edgeType: zod.string().optional(),
         data: zod
           .object({
             condition: zod.string().nullish(),
@@ -730,6 +751,7 @@ export const RejectPhaseResponse = zod.object({
             rationale: zod.string().nullish(),
             tools: zod.array(zod.string()).optional(),
             status: zod.string().optional(),
+            nodeCategory: zod.string().nullish(),
           }),
         }),
       ),
@@ -739,6 +761,7 @@ export const RejectPhaseResponse = zod.object({
           source: zod.string(),
           target: zod.string(),
           type: zod.string(),
+          edgeType: zod.string().optional(),
           data: zod
             .object({
               condition: zod.string().nullish(),
@@ -806,6 +829,7 @@ export const GetPipelineStatusResponse = zod.object({
           rationale: zod.string().nullish(),
           tools: zod.array(zod.string()).optional(),
           status: zod.string().optional(),
+          nodeCategory: zod.string().nullish(),
         }),
       }),
     ),
@@ -815,6 +839,7 @@ export const GetPipelineStatusResponse = zod.object({
         source: zod.string(),
         target: zod.string(),
         type: zod.string(),
+        edgeType: zod.string().optional(),
         data: zod
           .object({
             condition: zod.string().nullish(),
@@ -880,6 +905,7 @@ export const ListTemplatesResponseItem = zod.object({
         rationale: zod.string().nullish(),
         tools: zod.array(zod.string()).optional(),
         status: zod.string().optional(),
+        nodeCategory: zod.string().nullish(),
       }),
     }),
   ),
@@ -889,6 +915,7 @@ export const ListTemplatesResponseItem = zod.object({
       source: zod.string(),
       target: zod.string(),
       type: zod.string(),
+      edgeType: zod.string().optional(),
       data: zod
         .object({
           condition: zod.string().nullish(),
@@ -935,6 +962,7 @@ export const GetTemplateResponse = zod.object({
         rationale: zod.string().nullish(),
         tools: zod.array(zod.string()).optional(),
         status: zod.string().optional(),
+        nodeCategory: zod.string().nullish(),
       }),
     }),
   ),
@@ -944,6 +972,7 @@ export const GetTemplateResponse = zod.object({
       source: zod.string(),
       target: zod.string(),
       type: zod.string(),
+      edgeType: zod.string().optional(),
       data: zod
         .object({
           condition: zod.string().nullish(),
