@@ -277,8 +277,8 @@ export async function seedDatabase() {
   await db.insert(templatesTable).values(
     TEMPLATES.map((t) => ({
       ...t,
-      nodes: t.nodes as never,
-      edges: t.edges as never,
+      nodes: t.nodes as unknown,
+      edges: t.edges as unknown,
     }))
   );
 
@@ -286,8 +286,8 @@ export async function seedDatabase() {
   const insertedWorkflows = await db.insert(workflowsTable).values(
     SAMPLE_WORKFLOWS.map((w) => ({
       ...w,
-      nodes: (w.nodes ?? []) as never,
-      edges: (w.edges ?? []) as never,
+      nodes: (w.nodes ?? []) as unknown,
+      edges: (w.edges ?? []) as unknown,
       governanceConfig: {
         loggingLevel: "standard",
         autoSnapshot: true,
@@ -295,8 +295,8 @@ export async function seedDatabase() {
         costThreshold: 0.5,
         errorRateThreshold: 0.05,
         alertChannels: ["slack"],
-      } as never,
-      systemTypeSummary: { L0: 2, L1: 1, L2: 1, L3: 1 } as never,
+      } as unknown,
+      systemTypeSummary: { L0: 2, L1: 1, L2: 1, L3: 1 } as unknown,
       estimatedCostPerRun: "0.042",
       estimatedLatencyMs: 3500,
       tags: [] as string[],

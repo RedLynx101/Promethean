@@ -68,7 +68,7 @@ router.post("/executions", async (req, res): Promise<void> => {
     startedAt,
     completedAt,
     totalLatencyMs: latencyMs,
-    totalCost: costUsd.toFixed(6) as never,
+    totalCost: costUsd.toFixed(6),
     triggerPayload: inputData ?? null,
     result: success ? { output: "Execution completed successfully" } : null,
     error: success ? null : { message: "Simulated execution failure" },

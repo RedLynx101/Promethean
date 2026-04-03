@@ -14,7 +14,7 @@ import { runDecompositionAgent } from "../../lib/agents/decomposition";
 import { runSystemSelectionAgent } from "../../lib/agents/systemSelection";
 import { runOrchestrationAgent } from "../../lib/agents/orchestration";
 import { runGovernanceAgent } from "../../lib/agents/governance";
-import { logger } from "../../lib/logger";
+import type { PrometheanNode, PrometheanEdge, GovernanceConfig } from "../../lib/agents/types";
 
 const router: IRouter = Router();
 
@@ -23,6 +23,14 @@ const PHASES = ["wizard", "decompose", "select", "orchestrate", "govern", "deplo
 function getNextPhase(currentPhase: string): string {
   const idx = PHASES.indexOf(currentPhase);
   return PHASES[idx + 1] ?? "deployed";
+}
+
+function toJsonb<T>(value: T): unknown {
+  return value as unknown;
+}
+
+function fromJsonb<T>(value: unknown): T {
+  return value as T;
 }
 
 router.post("/pipeline/start", async (req, res): Promise<void> => {
@@ -40,7 +48,6 @@ router.post("/pipeline/start", async (req, res): Promise<void> => {
     return;
   }
 
-  // Save the brief to the workflow
   await db.update(workflowsTable).set({
     workflowBrief: description,
     domain: domain ?? workflow.domain,
@@ -55,8 +62,8 @@ router.post("/pipeline/start", async (req, res): Promise<void> => {
   const result = await runDecompositionAgent(description, domain, constraintsObj);
 
   await db.update(workflowsTable).set({
-    nodes: result.nodes as never,
-    edges: result.edges as never,
+    nodes: toJsonb(result.nodes),
+    edges: toJsonb(result.edges),
     phase: "decompose",
     status: "awaiting_approval",
   }).where(eq(workflowsTable.id, workflowId));
@@ -97,52 +104,56 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
     return;
   }
 
-  // Apply any user edits before advancing
-  let currentNodes = ((edits as Record<string, unknown>)?.nodes as never[] ?? workflow.nodes) as typeof workflow.nodes;
-  let currentEdges = ((edits as Record<string, unknown>)?.edges as never[] ?? workflow.edges) as typeof workflow.edges;
-  const currentGovernance = ((edits as Record<string, unknown>)?.governanceConfig ?? workflow.governanceConfig);
+  const editsObj = edits as Record<string, unknown> | undefined;
+
+  let currentNodes: PrometheanNode[] = fromJsonb<PrometheanNode[]>(
+    editsObj?.nodes ?? workflow.nodes
+  );
+  let currentEdges: PrometheanEdge[] = fromJsonb<PrometheanEdge[]>(
+    editsObj?.edges ?? workflow.edges
+  );
+  const currentGovernance: GovernanceConfig | Record<string, unknown> =
+    fromJsonb<GovernanceConfig>(editsObj?.governanceConfig ?? workflow.governanceConfig);
 
   if (edits) {
     await db.update(workflowsTable).set({
-      nodes: currentNodes,
-      edges: currentEdges,
-      governanceConfig: currentGovernance as never,
+      nodes: toJsonb(currentNodes),
+      edges: toJsonb(currentEdges),
+      governanceConfig: toJsonb(currentGovernance),
     }).where(eq(workflowsTable.id, workflowId));
   }
 
   const description = workflow.workflowBrief ?? "workflow";
-  const constraints = undefined;
   const nextPhase = getNextPhase(phase);
 
   req.log.info({ workflowId, phase, nextPhase }, "Advancing pipeline phase");
 
-  let result;
+  let result: Record<string, unknown>;
   let message = "";
 
   if (nextPhase === "select") {
     const agentResult = await runSystemSelectionAgent(
-      currentNodes as never,
-      currentEdges as never,
+      currentNodes,
+      currentEdges,
       description,
-      constraints
+      undefined
     );
-    currentNodes = agentResult.nodes as never;
-    currentEdges = agentResult.edges as never;
+    currentNodes = agentResult.nodes;
+    currentEdges = agentResult.edges;
     message = agentResult.summary;
 
-    // Compute system type summary
     const summary: Record<string, number> = {};
-    (agentResult.nodes as unknown as Record<string, unknown>[]).forEach((n) => {
-      const level = `L${(n.data as Record<string, unknown>)?.systemLevel ?? 0}`;
+    agentResult.nodes.forEach((n) => {
+      const level = `L${n.data?.systemLevel ?? 0}`;
       summary[level] = (summary[level] ?? 0) + 1;
     });
 
     await db.update(workflowsTable).set({
-      nodes: currentNodes,
-      edges: currentEdges,
+      nodes: toJsonb(currentNodes),
+      edges: toJsonb(currentEdges),
       phase: "select",
       status: "awaiting_approval",
-      systemTypeSummary: summary as never,
+      systemTypeSummary: toJsonb(summary),
       estimatedCostPerRun: String(agentResult.estimatedCostPerRun ?? 0),
       estimatedLatencyMs: agentResult.estimatedLatencyMs ?? null,
     }).where(eq(workflowsTable.id, workflowId));
@@ -151,18 +162,18 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
 
   } else if (nextPhase === "orchestrate") {
     const agentResult = await runOrchestrationAgent(
-      currentNodes as never,
-      currentEdges as never,
+      currentNodes,
+      currentEdges,
       description,
-      constraints
+      undefined
     );
-    currentNodes = agentResult.nodes as never;
-    currentEdges = agentResult.edges as never;
+    currentNodes = agentResult.nodes;
+    currentEdges = agentResult.edges;
     message = agentResult.summary;
 
     await db.update(workflowsTable).set({
-      nodes: currentNodes,
-      edges: currentEdges,
+      nodes: toJsonb(currentNodes),
+      edges: toJsonb(currentEdges),
       phase: "orchestrate",
       status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
@@ -171,19 +182,19 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
 
   } else if (nextPhase === "govern") {
     const agentResult = await runGovernanceAgent(
-      currentNodes as never,
-      currentEdges as never,
+      currentNodes,
+      currentEdges,
       description,
-      constraints
+      undefined
     );
-    currentNodes = agentResult.nodes as never;
-    currentEdges = agentResult.edges as never;
+    currentNodes = agentResult.nodes;
+    currentEdges = agentResult.edges;
     message = agentResult.summary;
 
     await db.update(workflowsTable).set({
-      nodes: currentNodes,
-      edges: currentEdges,
-      governanceConfig: agentResult.governanceConfig as never,
+      nodes: toJsonb(currentNodes),
+      edges: toJsonb(currentEdges),
+      governanceConfig: toJsonb(agentResult.governanceConfig),
       phase: "govern",
       status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
@@ -196,7 +207,6 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
     };
 
   } else if (nextPhase === "deployed") {
-    // Final deployment — save version
     await db.update(workflowsTable).set({
       phase: "deployed",
       status: "active",
@@ -205,14 +215,14 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
     await db.insert(workflowVersionsTable).values({
       workflowId,
       version: workflow.version,
-      definition: { nodes: currentNodes, edges: currentEdges, governanceConfig: currentGovernance },
+      definition: toJsonb({ nodes: currentNodes, edges: currentEdges, governanceConfig: currentGovernance }),
       changelog: "Initial deployment",
     });
 
-    result = { nodes: currentNodes as never, edges: currentEdges as never, message: "Workflow deployed successfully" };
+    result = { nodes: currentNodes, edges: currentEdges, message: "Workflow deployed successfully" };
   } else {
-    result = { nodes: currentNodes as never, edges: currentEdges as never, message: "Phase advanced" };
     await db.update(workflowsTable).set({ phase: nextPhase }).where(eq(workflowsTable.id, workflowId));
+    result = { nodes: currentNodes, edges: currentEdges, message: "Phase advanced" };
   }
 
   const [updated] = await db.select().from(workflowsTable).where(eq(workflowsTable.id, workflowId));
@@ -250,18 +260,18 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
   }
 
   const description = workflow.workflowBrief ?? "workflow";
-  const currentNodes = workflow.nodes as never;
-  const currentEdges = workflow.edges as never;
+  const currentNodes = fromJsonb<PrometheanNode[]>(workflow.nodes);
+  const currentEdges = fromJsonb<PrometheanEdge[]>(workflow.edges);
 
   req.log.info({ workflowId, phase, feedback }, "Regenerating pipeline phase");
 
-  let result;
+  let result: Record<string, unknown>;
 
   if (phase === "decompose") {
     const agentResult = await runDecompositionAgent(description, workflow.domain ?? undefined, undefined, feedback);
     await db.update(workflowsTable).set({
-      nodes: agentResult.nodes as never,
-      edges: agentResult.edges as never,
+      nodes: toJsonb(agentResult.nodes),
+      edges: toJsonb(agentResult.edges),
       status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message: agentResult.summary };
@@ -269,8 +279,8 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
   } else if (phase === "select") {
     const agentResult = await runSystemSelectionAgent(currentNodes, currentEdges, description, undefined, feedback);
     await db.update(workflowsTable).set({
-      nodes: agentResult.nodes as never,
-      edges: agentResult.edges as never,
+      nodes: toJsonb(agentResult.nodes),
+      edges: toJsonb(agentResult.edges),
       status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message: agentResult.summary };
@@ -278,8 +288,8 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
   } else if (phase === "orchestrate") {
     const agentResult = await runOrchestrationAgent(currentNodes, currentEdges, description, undefined, feedback);
     await db.update(workflowsTable).set({
-      nodes: agentResult.nodes as never,
-      edges: agentResult.edges as never,
+      nodes: toJsonb(agentResult.nodes),
+      edges: toJsonb(agentResult.edges),
       status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message: agentResult.summary };
@@ -287,9 +297,9 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
   } else if (phase === "govern") {
     const agentResult = await runGovernanceAgent(currentNodes, currentEdges, description, undefined, feedback);
     await db.update(workflowsTable).set({
-      nodes: agentResult.nodes as never,
-      edges: agentResult.edges as never,
-      governanceConfig: agentResult.governanceConfig as never,
+      nodes: toJsonb(agentResult.nodes),
+      edges: toJsonb(agentResult.edges),
+      governanceConfig: toJsonb(agentResult.governanceConfig),
       status: "awaiting_approval",
     }).where(eq(workflowsTable.id, workflowId));
     result = {

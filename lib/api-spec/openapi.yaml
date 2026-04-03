@@ -485,6 +485,35 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Execution"
+    post:
+      operationId: createExecution
+      tags: [executions]
+      summary: Trigger a new execution of a deployed workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workflowId]
+              properties:
+                workflowId:
+                  type: string
+                  format: uuid
+                inputData:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "201":
+          description: Created execution
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Execution"
+        "400":
+          description: Invalid request or workflow not deployed
+        "404":
+          description: Workflow not found
 
   /executions/{id}:
     get:
@@ -569,6 +598,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Alert"
+
+  /alerts/{id}:
+    delete:
+      operationId: dismissAlert
+      tags: [alerts]
+      summary: Dismiss (delete) an alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Alert dismissed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "404":
+          description: Alert not found
 
   # ─── Dashboard ────────────────────────────────────────────────────────────────
   /dashboard/stats:

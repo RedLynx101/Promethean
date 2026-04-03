@@ -20,9 +20,11 @@ export interface PrometheanEdge {
   source: string;
   target: string;
   type: string;
+  edgeType?: string;
   data?: {
     condition?: string | null;
     label?: string | null;
+    edgeType?: string | null;
   };
 }
 
