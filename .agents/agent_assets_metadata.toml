@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "vIxlp1LGB_A9x5uX787nV"
+uri = "file://phase-2/phase-2-deliverables.zip"
+type = "unspecified"
+title = "Phase 2 Deliverables — Promethean Studio"
