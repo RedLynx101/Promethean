@@ -9,7 +9,7 @@
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════════╗
-║                        P R O M E T H E A N   S T U D I O                       ║
+║                        P R O M E T H E A N   S T U D I O                         ║
 ║                     Workflow Analysis & Orchestration Platform                   ║
 ╚══════════════════════════════════════════════════════════════════════════════════╝
 
@@ -17,22 +17,22 @@
 │                          PRESENTATION LAYER                                     │
 │                     React PWA + ARWES Sci-Fi Theme                              │
 │                                                                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
-│  │   COMMAND    │  │   WORKFLOW   │  │   VISUAL     │  │   TEMPLATE   │        │
-│  │   CENTER     │  │   WIZARD     │  │   EDITOR     │  │   LIBRARY    │        │
-│  │              │  │              │  │              │  │              │        │
-│  │ • KPI Dash   │  │ • 4-Step     │  │ • React Flow │  │ • 6 Pre-built│        │
-│  │ • Timeline   │  │   Intake     │  │ • L0–L5 Nodes│  │   Templates  │        │
-│  │ • Alert Feed │  │ • Constraints│  │ • Phase Bar  │  │ • Filterable │        │
-│  │ • Fleet Grid │  │ • Governance │  │ • Gate Ctrls │  │ • CRM, Sec,  │        │
-│  │              │  │ • Review     │  │ • Confidence │  │   Compliance │        │
-│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
+│  │   COMMAND    │  │   WORKFLOW   │  │   VISUAL     │  │   TEMPLATE   │         │
+│  │   CENTER     │  │   WIZARD     │  │   EDITOR     │  │   LIBRARY    │         │
+│  │              │  │              │  │              │  │              │         │
+│  │ • KPI Dash   │  │ • 4-Step     │  │ • React Flow │  │ • 6 Pre-built│         │
+│  │ • Timeline   │  │   Intake     │  │ • L0–L5 Nodes│  │   Templates  │         │
+│  │ • Alert Feed │  │ • Constraints│  │ • Phase Bar  │  │ • Filterable │         │
+│  │ • Fleet Grid │  │ • Governance │  │ • Gate Ctrls │  │ • CRM, Sec,  │         │
+│  │              │  │ • Review     │  │ • Confidence │  │   Compliance │         │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘         │
 │                                                                                 │
 │  ┌──────────────┐                                                               │
 │  │  WORKFLOW    │  Zustand State Management | React Query Data Fetching         │
 │  │  DETAIL      │  Orbitron + JetBrains Mono | Cyan/Magenta Accents             │
 │  │              │                                                               │
-│  │ • Exec Logs  │  Built with: React 19 + TypeScript + Vite + Tailwind CSS     │
+│  │ • Exec Logs  │  Built with: React 19 + TypeScript + Vite + Tailwind CSS      │
 │  │ • Run Times  │                                                               │
 │  └──────────────┘                                                               │
 └────────────────────────────────────┬────────────────────────────────────────────┘
@@ -45,7 +45,7 @@
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                            API SERVER LAYER                                     │
-│                     Express.js + TypeScript + Pino Logger                        │
+│                     Express.js + TypeScript + Pino Logger                       │
 │                                                                                 │
 │  ┌─────────────────────────────────────────────────────────────────────────┐    │
 │  │                        Pipeline Router                                  │    │
@@ -57,10 +57,10 @@
 │  └─────────────────────────────────────────────────────────────────────────┘    │
 │                                                                                 │
 │  ┌─────────────────────────────────────────────────────────────────────────┐    │
-│  │                        Resource Routers                                  │    │
+│  │                        Resource Routers                                 │    │
 │  │                                                                         │    │
 │  │   CRUD /workflows    → Create, list, update, delete workflows           │    │
-│  │   CRUD /templates    → Browse and apply workflow templates               │    │
+│  │   CRUD /templates    → Browse and apply workflow templates              │    │
 │  │   CRUD /alerts       → Manage governance alerts                         │    │
 │  │   CRUD /executions   → Track execution history                          │    │
 │  └─────────────────────────────────────────────────────────────────────────┘    │
@@ -73,32 +73,32 @@
                           │                     │
                           ▼                     ▼
 ┌─────────────────────────────────┐  ┌───────────────────────────────────────────┐
-│      4-AGENT AI PIPELINE       │  │              DATA LAYER                    │
+│      4-AGENT AI PIPELINE        │  │              DATA LAYER                   │
 │                                 │  │                                           │
-│  (See Pipeline Detail Below)    │  │   PostgreSQL + Drizzle ORM               │
+│  (See Pipeline Detail Below)    │  │   PostgreSQL + Drizzle ORM                │
 │                                 │  │                                           │
-│  Each agent calls:              │  │   ┌─────────────┐  ┌─────────────┐       │
-│  • OpenAI GPT-5.2 API          │  │   │  workflows   │  │  executions │       │
-│  • JSON structured output      │  │   │             │  │             │       │
-│  • Function calling mode       │  │   │ • id (UUID)  │  │ • id (UUID) │       │
+│  Each agent calls:              │  │   ┌──────────────┐  ┌─────────────┐       │
+│  • OpenAI GPT-5.2 API           │  │   │  workflows   │  │  executions │       │
+│  • JSON structured output       │  │   │              │  │             │       │
+│  • Function calling mode        │  │   │ • id (UUID)  │  │ • id (UUID) │       │
 │                                 │  │   │ • name       │  │ • workflowId│       │
 │                                 │  │   │ • nodes[]    │  │ • status    │       │
 │                                 │  │   │ • edges[]    │  │ • result    │       │
 │                                 │  │   │ • phase      │  │ • cost      │       │
 │                                 │  │   │ • status     │  │ • latency   │       │
 │                                 │  │   │ • govConfig  │  │             │       │
-│                                 │  │   └─────────────┘  └─────────────┘       │
+│                                 │  │   └──────────────┘  └─────────────┘       │
 │                                 │  │                                           │
-│                                 │  │   ┌─────────────┐  ┌─────────────┐       │
+│                                 │  │   ┌──────────────┐  ┌─────────────┐       │
 │                                 │  │   │  templates   │  │   alerts    │       │
-│                                 │  │   │             │  │             │       │
+│                                 │  │   │              │  │             │       │
 │                                 │  │   │ • id (UUID)  │  │ • id (UUID) │       │
 │                                 │  │   │ • name       │  │ • workflowId│       │
 │                                 │  │   │ • nodes[]    │  │ • alertType │       │
 │                                 │  │   │ • edges[]    │  │ • severity  │       │
 │                                 │  │   │ • domain     │  │ • evidence  │       │
 │                                 │  │   │ • rating     │  │ • status    │       │
-│                                 │  │   └─────────────┘  └─────────────┘       │
+│                                 │  │   └──────────────┘  └─────────────┘       │
 │                                 │  │                                           │
 │                                 │  │   ┌──────────────────────────┐            │
 │                                 │  │   │   workflow_versions      │            │
@@ -126,7 +126,7 @@
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════════╗
-║                    PROMETHEAN 4-AGENT SEQUENTIAL PIPELINE                       ║
+║                    PROMETHEAN 4-AGENT SEQUENTIAL PIPELINE                        ║
 ║          "Right-size every workflow step on the L0–L5 spectrum"                  ║
 ╚══════════════════════════════════════════════════════════════════════════════════╝
 
@@ -144,24 +144,24 @@
 │  ┌───────────┐  │    │  ┌───────────┐  │    │  ┌───────────┐  │    │  ┌───────────┐  │
 │  │  INPUT:   │  │    │  │  INPUT:   │  │    │  │  INPUT:   │  │    │  │  INPUT:   │  │
 │  │  Natural  │  │    │  │  Nodes[]  │  │    │  │  Annotated│  │    │  │  Enriched │  │
-│  │  language │  │    │  │  Edges[]  │  │    │  │  nodes w/ │  │    │  │  workflow  │  │
-│  │  workflow │  │    │  │  Original │  │    │  │  L0–L5    │  │    │  │  w/ tools  │  │
-│  │  brief    │  │    │  │  descrip. │  │    │  │  levels   │  │    │  │  & edges   │  │
+│  │  language │  │    │  │  Edges[]  │  │    │  │  nodes w/ │  │    │  │  workflow │  │
+│  │  workflow │  │    │  │  Original │  │    │  │  L0–L5    │  │    │  │  w/ tools │  │
+│  │  brief    │  │    │  │  descrip. │  │    │  │  levels   │  │    │  │  & edges  │  │
 │  └───────────┘  │    │  └───────────┘  │    │  └───────────┘  │    │  └───────────┘  │
 │                 │    │                 │    │                 │    │                 │
 │  ┌───────────┐  │    │  ┌───────────┐  │    │  ┌───────────┐  │    │  ┌───────────┐  │
 │  │  OUTPUT:  │  │    │  │  OUTPUT:  │  │    │  │  OUTPUT:  │  │    │  │  OUTPUT:  │  │
 │  │  nodes[]  │  │    │  │  nodes[] +│  │    │  │  nodes[] +│  │    │  │  Final    │  │
-│  │  edges[]  │  │    │  │  system   │  │    │  │  tools[]  │  │    │  │  workflow +│  │
+│  │  edges[]  │  │    │  │  system   │  │    │  │  tools[]  │  │    │  │  workflow+│  │
 │  │  summary  │  │    │  │  Level,   │  │    │  │  refined  │  │    │  │  govConfig│  │
 │  │           │  │    │  │  confid., │  │    │  │  edges +  │  │    │  │  logging  │  │
 │  │           │  │    │  │  rationale│  │    │  │  error    │  │    │  │  alerts   │  │
 │  │           │  │    │  │  cost/lat │  │    │  │  handling │  │    │  │  threshlds│  │
 │  └───────────┘  │    │  └───────────┘  │    │  └───────────┘  │    │  └───────────┘  │
 │                 │    │                 │    │                 │    │                 │
-│  Model: GPT-5.2│    │  Model: GPT-5.2│    │  Model: GPT-5.2│    │  Model: GPT-5.2│
-│  JSON output   │    │  JSON output   │    │  JSON output   │    │  JSON output   │
-│  8192 max tkns │    │  8192 max tkns │    │  8192 max tkns │    │  8192 max tkns │
+│  Model: GPT-5.2 │    │  Model: GPT-5.2 │    │  Model: GPT-5.2 │    │  Model: GPT-5.2 │
+│  JSON output    │    │  JSON output    │    │  JSON output    │    │  JSON output    │
+│  8192 max tkns  │    │  8192 max tkns  │    │  8192 max tkns  │    │  8192 max tkns  │
 └────────┬────────┘    └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
          │                      │                      │                      │
          ▼                      ▼                      ▼                      ▼
@@ -170,10 +170,10 @@
    │  REVIEW   │          │  REVIEW   │          │  REVIEW   │          │  REVIEW   │
    │  GATE 1   │          │  GATE 2   │          │  GATE 3   │          │  GATE 4   │
    │           │          │           │          │           │          │           │
-   │ ✓ Approve │          │ ✓ Approve │          │ ✓ Approve │          │ ✓ Approve │
-   │ ✗ Reject  │          │ ✗ Reject  │          │ ✗ Reject  │          │ ✗ Reject  │
-   │   +feedback│          │   +feedback│          │   +feedback│          │   +feedback│
-   │ ✎ Edit    │          │ ✎ Edit    │          │ ✎ Edit    │          │ ✎ Edit    │
+   │ ✓ Approve │          │ ✓ Approve │          │ ✓ Approve │         │ ✓ Approve │
+   │ ✗ Reject  │          │ ✗ Reject  │          │ ✗ Reject  │         │ ✗ Reject  │
+   │  +feedback│          │   +feedback│         │   +feedback│         │   +feedback│
+   │ ✎ Edit   │          │ ✎ Edit    │          │ ✎ Edit    │         │ ✎ Edit    │
    └───────────┘          └───────────┘          └───────────┘          └───────────┘
 ```
 
@@ -193,7 +193,7 @@
    │                        │  POST /workflows         │                       │
    │                        │  ─────────────────────▶  │                       │
    │                        │  ◀─ 201 {id, status:     │                       │
-   │                        │     "draft"}              │                       │
+   │                        │     "draft"}             │                       │
    │                        │                          │                       │
    │  2. Fill Wizard Form   │                          │                       │
    │  (description, domain, │                          │                       │
@@ -205,7 +205,7 @@
    │                        │  ─────────────────────▶  │                       │
    │                        │                          │  ┌─────────────────┐  │
    │                        │                          │  │ Decomposition   │  │
-   │                        │                          │──▶│ Agent           │  │
+   │                        │                          │──▶│ Agent          │  │
    │                        │                          │  │ (GPT-5.2 call)  │  │
    │                        │                          │  └────────┬────────┘  │
    │                        │                          │           │           │
@@ -222,7 +222,7 @@
    │                        │      status:"awaiting_   │                       │
    │                        │      approval", nodes,   │                       │
    │  3. Review in Editor   │      edges}              │                       │
-   │  ◀─────────────────── │                          │                       │
+   │  ◀───────────────────  │                          │                       │
    │                        │                          │                       │
    │  4. APPROVE or REJECT  │                          │                       │
    │  ───────────────────▶  │                          │                       │
@@ -233,11 +233,11 @@
    │                        │  ─────────────────────▶  │                       │
    │                        │                          │  ┌─────────────────┐  │
    │                        │                          │  │ System Selection│  │
-   │                        │                          │──▶│ Agent           │  │
+   │                        │                          │──▶ Agent           │  │
    │                        │                          │  │ (GPT-5.2 call)  │  │
    │                        │                          │  └────────┬────────┘  │
    │                        │                          │           │           │
-   │                        │                          │  {nodes[] w/ L0–L5,  │
+   │                        │                          │  {nodes[] w/ L0–L5,   │
    │                        │                          │   confidence, cost}   │
    │                        │                          │                       │
    │                        │  ... (repeat approve/reject for each phase) ...  │
@@ -260,7 +260,7 @@
    │                        │                          │  versions (snapshot)  │
    │                        │                          │                       │
    │  6. View in Dashboard  │  ◀─ {status:"deployed"}  │                       │
-   │  ◀─────────────────── │                          │                       │
+   │  ◀───────────────────  │                          │                       │
    │                        │                          │                       │
 ```
 
@@ -289,8 +289,8 @@
               │     └────┬──────┘     │
               │          │ approve    │ reject + feedback
               │          ▼            │ (re-run Orchestration Agent)
-              │     ┌──────────┐     │
-              │     │  govern  │─────┘
+              │     ┌──────────┐      │
+              │     │  govern  │──────┘
               │     └────┬─────┘
               │          │ approve
               │          ▼
@@ -305,7 +305,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     TECHNOLOGY STACK                             │
+│                     TECHNOLOGY STACK                            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  FRONTEND                                                       │
