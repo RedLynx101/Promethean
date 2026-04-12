@@ -13,50 +13,61 @@
 | Track | Track A: Technical Build |
 | Phase | Phase 2 — Architecture, Prototype, and Evaluation Plan |
 | Repository | Replit — Promethean Studio |
+| Team Members | Noah Hicks, Rushabh Kankariya, Vishnu Bala, Yiying Lu, Mel Wong |
 
 ---
 
 ## Team Members and Contributions
 
-### Team Member 1: [Name]
+### Noah Hicks
 
 | Field | Details |
 |-------|---------|
-| **Role** | [e.g., Project Lead / Backend Engineer / Frontend Engineer] |
-| **Focus Area in Phase 2** | [e.g., Agent pipeline architecture, API design, database schema] |
-| **Key Deliverables** | [List specific things this person built or wrote] |
-| **Hours Contributed (Phase 2)** | [Estimated hours] |
-| **Phase 3 Plans** | [What this person will focus on in Phase 3] |
+| **Role** | [Fill in — e.g., Project Lead / Backend Engineer] |
+| **Focus Area in Phase 2** | [Fill in — e.g., Agent pipeline architecture, API design] |
+| **Key Deliverables** | [Fill in — list specific things you built or wrote] |
+| **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
+| **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
 
-### Team Member 2: [Name]
-
-| Field | Details |
-|-------|---------|
-| **Role** | [e.g., Frontend Engineer / UX Designer] |
-| **Focus Area in Phase 2** | [e.g., React Flow visual editor, Wizard UI, Dashboard] |
-| **Key Deliverables** | [List specific things this person built or wrote] |
-| **Hours Contributed (Phase 2)** | [Estimated hours] |
-| **Phase 3 Plans** | [What this person will focus on in Phase 3] |
-
-### Team Member 3: [Name]
+### Rushabh Kankariya
 
 | Field | Details |
 |-------|---------|
-| **Role** | [e.g., AI/ML Engineer / Evaluation Lead] |
-| **Focus Area in Phase 2** | [e.g., Agent prompt engineering, evaluation plan, test design] |
-| **Key Deliverables** | [List specific things this person built or wrote] |
-| **Hours Contributed (Phase 2)** | [Estimated hours] |
-| **Phase 3 Plans** | [What this person will focus on in Phase 3] |
+| **Role** | [Fill in — e.g., Frontend Engineer / UX Designer] |
+| **Focus Area in Phase 2** | [Fill in — e.g., React Flow visual editor, Wizard UI, Dashboard] |
+| **Key Deliverables** | [Fill in — list specific things you built or wrote] |
+| **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
+| **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
 
-### Team Member 4: [Name]
+### Vishnu Bala
 
 | Field | Details |
 |-------|---------|
-| **Role** | [e.g., Documentation Lead / Governance Specialist] |
-| **Focus Area in Phase 2** | [e.g., Risk analysis, governance design, documentation] |
-| **Key Deliverables** | [List specific things this person built or wrote] |
-| **Hours Contributed (Phase 2)** | [Estimated hours] |
-| **Phase 3 Plans** | [What this person will focus on in Phase 3] |
+| **Role** | [Fill in — e.g., AI/ML Engineer / Evaluation Lead] |
+| **Focus Area in Phase 2** | [Fill in — e.g., Agent prompt engineering, evaluation plan, test design] |
+| **Key Deliverables** | [Fill in — list specific things you built or wrote] |
+| **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
+| **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
+
+### Yiying Lu
+
+| Field | Details |
+|-------|---------|
+| **Role** | [Fill in — e.g., Documentation Lead / Governance Specialist] |
+| **Focus Area in Phase 2** | [Fill in — e.g., Risk analysis, governance design, documentation] |
+| **Key Deliverables** | [Fill in — list specific things you built or wrote] |
+| **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
+| **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
+
+### Mel Wong
+
+| Field | Details |
+|-------|---------|
+| **Role** | [Fill in — e.g., Research Lead / Evaluation Specialist] |
+| **Focus Area in Phase 2** | [Fill in — e.g., Evaluation plan, test scenario design, risk analysis] |
+| **Key Deliverables** | [Fill in — list specific things you built or wrote] |
+| **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
+| **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
 
 ---
 
@@ -68,28 +79,30 @@
 - Human-in-the-loop pipeline with approve/reject/edit at every stage
 - Visual workflow editor with React Flow, color-coded L0–L5 nodes, confidence badges
 - Command Center dashboard with KPI metrics, timeline, alert feed, fleet grid
-- Workflow Wizard with 4-step intake form
-- Template library with 6 pre-built workflow templates
+- Workflow Wizard with conversational intake flow (8-step Prometheus assistant)
+- Template library with 6 pre-built workflow templates across 6 domains
 - PostgreSQL schema with Drizzle ORM (workflows, executions, alerts, templates, versions)
-- ARWES-inspired sci-fi dark theme throughout
+- OpenAPI 3.1 spec with generated Zod schemas and React Query hooks (Orval codegen)
+- ARWES-inspired sci-fi dark theme with Orbitron + JetBrains Mono typography
+- 5-minute product demo video produced
 
 ### What Remains for Phase 3
-- Execute the 5 evaluation test scenarios
-- Collect interaction traces and evidence
+- Execute the 5 planned evaluation test scenarios
+- Collect and log interaction traces and evidence artifacts
 - Run baseline comparisons (Always-L0, Always-L4, Always-L5)
-- Identify and document 2+ failure cases
-- Create the 5-minute project video
-- Write the final report
-- Prepare the portfolio-ready submission package
+- Document 2+ concrete failure cases with root cause analysis
+- Write the final report (problem → architecture → evaluation → results → lessons learned)
+- Compile the complete portfolio-ready submission package (PDF, screenshots, eval files)
 
 ---
 
 ## Collaboration Tools Used
+
 | Tool | Purpose |
 |------|---------|
-| Replit | Primary development environment and hosting |
-| [Chat/Communication tool] | Team communication |
-| [Other tools] | [Purpose] |
+| Replit | Primary development environment, live hosting, and version control |
+| [Fill in — e.g., Discord / Slack / Teams] | Team communication and coordination |
+| [Fill in — e.g., Google Docs / Notion] | Shared documentation and planning |
 
 ---
 
@@ -97,6 +110,6 @@
 
 | Tool | Used For | What Was Changed Manually | What Was Independently Verified |
 |------|---------|--------------------------|-------------------------------|
-| [e.g., Replit Agent] | [e.g., Code scaffolding, component generation] | [e.g., Agent prompts tuned by hand, UI styling adjusted] | [e.g., Pipeline correctness tested manually, classifications reviewed] |
-| [e.g., GPT-5.2] | [e.g., Agent LLM backbone for classification] | [e.g., Prompt engineering, output format design] | [e.g., Output quality reviewed against expert judgment] |
-| [Other tools] | [Purpose] | [Manual changes] | [Verification] |
+| Replit Agent (AI coding assistant) | Code scaffolding, component generation, route implementation, schema design | Agent prompts hand-tuned for output quality; UI layout and styling refined; Zod validation schemas reviewed and corrected; edge cases added manually | Pipeline correctness tested end-to-end; node classification logic reviewed against rubric; API contract verified by running type checks (`pnpm run typecheck`) |
+| OpenAI GPT-5.4-mini-2026-03-17 | Runtime LLM backbone for all four pipeline agents (Decomposition, System Selection, Orchestration, Governance) | Prompt engineering for each agent written by hand; output format constraints (structured JSON via Zod) designed manually; system spectrum rubric authored by team | Agent outputs reviewed against expected L0–L5 classifications; governance config fields validated against schema; decomposition quality assessed on real workflow descriptions |
+| [Fill in any other tools — e.g., ChatGPT for writing, Figma for mockups] | [Fill in] | [Fill in] | [Fill in] |

@@ -8,6 +8,20 @@ Promethean takes a natural-language description of a business workflow and trans
 
 ---
 
+## Team
+
+**Track A: Technical Build** | Agentic Systems Studio — Phase 2
+
+| Name | Role |
+|------|------|
+| Noah Hicks | [Fill in] |
+| Rushabh Kankariya | [Fill in] |
+| Vishnu Bala | [Fill in] |
+| Yiying Lu | [Fill in] |
+| Mel Wong | [Fill in] |
+
+---
+
 ## What It Does
 
 1. **Describe** a workflow in plain English through a conversational wizard.
