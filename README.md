@@ -14,7 +14,7 @@ Promethean takes a natural-language description of a business workflow and trans
 
 | Name | Role |
 |------|------|
-| Noah Hicks | [Fill in] |
+| Noah Hicks | Project Manager |
 | Rushabh Kankariya | [Fill in] |
 | Vishnu Bala | [Fill in] |
 | Yiying Lu | [Fill in] |

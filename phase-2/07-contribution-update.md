@@ -23,9 +23,9 @@
 
 | Field | Details |
 |-------|---------|
-| **Role** | [Fill in — e.g., Project Lead / Backend Engineer] |
-| **Focus Area in Phase 2** | [Fill in — e.g., Agent pipeline architecture, API design] |
-| **Key Deliverables** | [Fill in — list specific things you built or wrote] |
+| **Role** | Project Manager |
+| **Focus Area in Phase 2** | Replit Automations and final look on deliverables |
+| **Key Deliverables** | Scaffolding and final submission files |
 | **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
 | **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
 
@@ -101,8 +101,7 @@
 | Tool | Purpose |
 |------|---------|
 | Replit | Primary development environment, live hosting, and version control |
-| [Fill in — e.g., Discord / Slack / Teams] | Team communication and coordination |
-| [Fill in — e.g., Google Docs / Notion] | Shared documentation and planning |
+| WhatsApp | Team communication and coordination |
 
 ---
 
@@ -112,4 +111,3 @@
 |------|---------|--------------------------|-------------------------------|
 | Replit Agent (AI coding assistant) | Code scaffolding, component generation, route implementation, schema design | Agent prompts hand-tuned for output quality; UI layout and styling refined; Zod validation schemas reviewed and corrected; edge cases added manually | Pipeline correctness tested end-to-end; node classification logic reviewed against rubric; API contract verified by running type checks (`pnpm run typecheck`) |
 | OpenAI GPT-5.4-mini-2026-03-17 | Runtime LLM backbone for all four pipeline agents (Decomposition, System Selection, Orchestration, Governance) | Prompt engineering for each agent written by hand; output format constraints (structured JSON via Zod) designed manually; system spectrum rubric authored by team | Agent outputs reviewed against expected L0–L5 classifications; governance config fields validated against schema; decomposition quality assessed on real workflow descriptions |
-| [Fill in any other tools — e.g., ChatGPT for writing, Figma for mockups] | [Fill in] | [Fill in] | [Fill in] |
