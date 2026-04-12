@@ -15,60 +15,7 @@
 | Repository | Replit — Promethean Studio |
 | Team Members | Noah Hicks, Rushabh Kankariya, Vishnu Bala, Yiying Lu, Mel Wong |
 
----
-
-## Team Members and Contributions
-
-### Noah Hicks
-
-| Field | Details |
-|-------|---------|
-| **Role** | Project Manager |
-| **Focus Area in Phase 2** | Replit Automations and final look on deliverables |
-| **Key Deliverables** | Scaffolding and final submission files |
-| **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
-| **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
-
-### Rushabh Kankariya
-
-| Field | Details |
-|-------|---------|
-| **Role** | [Fill in — e.g., Frontend Engineer / UX Designer] |
-| **Focus Area in Phase 2** | [Fill in — e.g., React Flow visual editor, Wizard UI, Dashboard] |
-| **Key Deliverables** | [Fill in — list specific things you built or wrote] |
-| **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
-| **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
-
-### Vishnu Bala
-
-| Field | Details |
-|-------|---------|
-| **Role** | [Fill in — e.g., AI/ML Engineer / Evaluation Lead] |
-| **Focus Area in Phase 2** | [Fill in — e.g., Agent prompt engineering, evaluation plan, test design] |
-| **Key Deliverables** | [Fill in — list specific things you built or wrote] |
-| **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
-| **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
-
-### Yiying Lu
-
-| Field | Details |
-|-------|---------|
-| **Role** | [Fill in — e.g., Documentation Lead / Governance Specialist] |
-| **Focus Area in Phase 2** | [Fill in — e.g., Risk analysis, governance design, documentation] |
-| **Key Deliverables** | [Fill in — list specific things you built or wrote] |
-| **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
-| **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
-
-### Mel Wong
-
-| Field | Details |
-|-------|---------|
-| **Role** | [Fill in — e.g., Research Lead / Evaluation Specialist] |
-| **Focus Area in Phase 2** | [Fill in — e.g., Evaluation plan, test scenario design, risk analysis] |
-| **Key Deliverables** | [Fill in — list specific things you built or wrote] |
-| **Hours Contributed (Phase 2)** | [Fill in — estimated hours] |
-| **Phase 3 Plans** | [Fill in — what you will focus on in Phase 3] |
-
+Note: The team worked to give feedback and determine the alignment of the project and any edits that should be made.
 ---
 
 ## Phase 2 Summary

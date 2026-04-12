@@ -14,11 +14,11 @@ Promethean takes a natural-language description of a business workflow and trans
 
 | Name | Role |
 |------|------|
-| Noah Hicks | Project Manager |
-| Rushabh Kankariya | [Fill in] |
-| Vishnu Bala | [Fill in] |
-| Yiying Lu | [Fill in] |
-| Mel Wong | [Fill in] |
+| Noah Hicks | Project Lead |
+| Rushabh Kankariya | Tech Stack Testing/Exploration |
+| Vishnu Bala | Agent Alignment |
+| Yiying Lu | Tech Stack Testing/Exploration |
+| Mel Wong | Project Alignment |
 
 ---
 
