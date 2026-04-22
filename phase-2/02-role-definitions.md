@@ -37,7 +37,7 @@ Operates ONLY on workflow decomposition. Does not classify substeps, select syst
 ### Tools Used
 | Tool | Purpose |
 |------|---------|
-| OpenAI GPT-5.2 API | LLM reasoning for decomposition |
+| OpenAI GPT-5.4-mini API | LLM reasoning for decomposition |
 | JSON structured output mode | Ensures valid, parseable output |
 | Pino logger | Structured logging of agent execution |
 
@@ -99,7 +99,7 @@ Operates ONLY on classification. Does not decompose workflows, assemble architec
 ### Tools Used
 | Tool | Purpose |
 |------|---------|
-| OpenAI GPT-5.2 API | Multi-path reasoning for classification |
+| OpenAI GPT-5.4-mini API | Multi-path reasoning for classification |
 | L0–L5 Classification Rubric | Embedded in system prompt as decision framework |
 | JSON structured output mode | Ensures valid output |
 

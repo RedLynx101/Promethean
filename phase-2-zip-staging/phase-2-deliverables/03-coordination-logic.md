@@ -218,6 +218,9 @@ const defaultConfig: GovernanceConfig = {
 
 ## 7. Sequence Diagram — Full Pipeline Execution
 
+> **Model reference:** `gpt-5.4` in the sequence diagrams below is an abbreviation for `gpt-5.4-mini-2026-03-17`, the exact OpenAI model identifier used by all four agents.
+
+
 ```
 User        Frontend       API Server     Decomp.Agent   Select.Agent   Orch.Agent   Gov.Agent    Database
  │              │               │               │              │             │            │           │
@@ -231,7 +234,7 @@ User        Frontend       API Server     Decomp.Agent   Select.Agent   Orch.Age
  │              │               │               │              │             │            │           │
  │              │               │ runDecomp()   │              │             │            │           │
  │              │               │──────────────▶│              │             │            │           │
- │              │               │               │ GPT-5.2 call │             │            │           │
+ │              │               │               │ gpt-5.4 call │             │            │           │
  │              │               │               │─────────┐    │             │            │           │
  │              │               │               │         │    │             │            │           │
  │              │               │               │◀────────┘    │             │            │           │
@@ -254,7 +257,7 @@ User        Frontend       API Server     Decomp.Agent   Select.Agent   Orch.Age
  │              │──────────────▶│               │              │             │            │           │
  │              │               │ runSelect()   │              │             │            │           │
  │              │               │──────────────────────────────▶│             │            │           │
- │              │               │               │              │ GPT-5.2     │            │           │
+ │              │               │               │              │ gpt-5.4     │            │           │
  │              │               │               │              │────────┐    │            │           │
  │              │               │               │              │        │    │            │           │
  │              │               │               │              │◀───────┘    │            │           │
@@ -272,7 +275,7 @@ User        Frontend       API Server     Decomp.Agent   Select.Agent   Orch.Age
  │              │──────────────▶│               │              │             │            │           │
  │              │               │ runOrchestration()            │             │            │           │
  │              │               │──────────────────────────────────────────▶│            │           │
- │              │               │               │              │             │ GPT-5.2   │           │
+ │              │               │               │              │             │ gpt-5.4   │           │
  │              │               │               │              │             │───────┐   │           │
  │              │               │               │              │             │       │   │           │
  │              │               │               │              │             │◀──────┘   │           │
@@ -289,7 +292,7 @@ User        Frontend       API Server     Decomp.Agent   Select.Agent   Orch.Age
  │              │──────────────▶│               │              │             │            │           │
  │              │               │ runGovernance()│              │             │            │           │
  │              │               │──────────────────────────────────────────────────────▶│           │
- │              │               │               │              │             │            │ GPT-5.2  │
+ │              │               │               │              │             │            │ gpt-5.4  │
  │              │               │               │              │             │            │──────┐   │
  │              │               │               │              │             │            │      │   │
  │              │               │               │              │             │            │◀─────┘   │
@@ -331,7 +334,7 @@ User        Frontend       API Server     Agent (same phase)   Database
  │              │               │ Re-run agent  │                  │
  │              │               │ with feedback │                  │
  │              │               │──────────────▶│                  │
- │              │               │               │ GPT-5.2 call     │
+ │              │               │               │ gpt-5.4 call     │
  │              │               │               │ (includes:       │
  │              │               │               │ "Previous result │
  │              │               │               │  was rejected.   │

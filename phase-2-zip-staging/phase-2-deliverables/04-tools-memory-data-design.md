@@ -16,7 +16,7 @@ This document describes what information each agent can access, how the system s
 ### Shared Resources (All Agents)
 | Resource | Type | Access |
 |----------|------|--------|
-| OpenAI GPT-5.2 API | LLM | Read (generate completions) |
+| OpenAI GPT-5.4-mini API | LLM | Read (generate completions) |
 | System prompt | Configuration | Read-only (embedded per agent) |
 | Pino logger | Observability | Write (structured log entries) |
 
@@ -222,7 +222,7 @@ Pre-built workflow patterns.
 ### Configuration
 | Parameter | Value | Rationale |
 |-----------|-------|-----------|
-| Model | `gpt-5.2` | Best balance of capability, cost, and speed for structured output |
+| Model | `gpt-5.4-mini-2026-03-17` | Best balance of capability, cost, and speed for structured output |
 | `max_completion_tokens` | 8192 | Sufficient for complex workflow JSON output |
 | `response_format` | `{ type: "json_object" }` | Forces valid JSON response, prevents prose leakage |
 | Temperature | Default (1.0) | Allows creative decomposition while JSON mode constrains format |
@@ -356,7 +356,7 @@ Zod provides runtime type checking that complements TypeScript's compile-time ch
 
 | Decision | Choice | Why |
 |----------|--------|-----|
-| Single LLM model for all agents | GPT-5.2 | Simplifies integration; function calling support; good balance of cost and capability |
+| Single LLM model for all agents | GPT-5.4-mini | Simplifies integration; function calling support; good balance of cost and capability |
 | JSON structured output mode | `response_format: json_object` | Eliminates parsing errors; ensures valid output |
 | PostgreSQL for pipeline state | Database-centric | Durable, auditable, queryable, survives restarts |
 | JSONB for workflow definitions | Flexible schema | Agent outputs evolve without migrations |
