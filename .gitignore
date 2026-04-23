@@ -27,6 +27,11 @@ node_modules
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# Local secrets (copy from .env.example)
+.env
+.env.local
+.env.*.local
+
 # misc
 /.sass-cache
 /connect.lock
@@ -47,3 +52,10 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# pnpm (local store; avoid committing ~400 MB of downloaded packages)
+.pnpm-store/
+
+# Claude Code — project-shared .claude/settings.json is fine to commit;
+# .claude/settings.local.json is per-developer (local MCP overrides, etc.)
+.claude/settings.local.json

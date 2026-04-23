@@ -12,13 +12,15 @@ Promethean takes a natural-language description of a business workflow, walks th
 
 **Track A: Technical Build** | Agentic Systems Studio — Phase 2 / Phase 3
 
-| Name | Role |
-|------|------|
-| Noah Hicks | Project Lead |
-| Rushabh Kankariya | Tech Stack Testing/Exploration |
-| Vishnu Bala | Agent Alignment |
-| Yiying Lu | Tech Stack Testing/Exploration |
-| Mel Wong | Project Alignment |
+| Name | Role | Key contributions |
+|------|------|-------------------|
+| Noah Hicks | Project Lead | Project direction and scope; owner of the overall submission timeline. See [`phase-3/reflections/noah_hicks.md`](phase-3/reflections/noah_hicks.md). |
+| Rushabh Kankariya | Tech Stack Testing/Exploration | Evaluation of framework options and tool-chain decisions. See [`phase-3/reflections/rushabh_kankariya.md`](phase-3/reflections/rushabh_kankariya.md). |
+| Vishnu Bala | Agent Alignment | Prompt engineering and alignment of the four in-process design agents. See [`phase-3/reflections/vishnu_bala.md`](phase-3/reflections/vishnu_bala.md). |
+| Yiying Lu | Tech Stack Testing/Exploration | Integration validation and exploratory work on stack choices. See [`phase-3/reflections/yiying_lu.md`](phase-3/reflections/yiying_lu.md). |
+| Mel Wong | Project Alignment | Phase-3 evidence package + rubric alignment; API / wizard UX fixes; **v0.2.0 pivot (emit phase, vault cookbook, MCP server, Build button, first real emit)**. Reflection: [`phase-3/reflections/mel_wong.md`](phase-3/reflections/mel_wong.md). |
+
+Phase-3 per-person reflections are in [`phase-3/reflections/`](phase-3/reflections/) — each teammate maintains their own.
 
 ---
 
@@ -235,7 +237,7 @@ The API server runs on port 8080. The frontend dev server proxies `/api` request
 ### Running an emit
 
 1. Design a workflow through the UI (Wizard → four approval phases).
-2. From the workflow detail page, click **Build** and pick a target framework.
+2. From the workflow detail page, click **Build** and pick a target framework (langgraph-js default + 6 alternatives).
 3. The UI calls `POST /api/workflows/:id/emit`; a manifest lands in `emit-requests/`.
 4. In another terminal:
    ```bash
@@ -246,6 +248,25 @@ The API server runs on port 8080. The frontend dev server proxies `/api` request
 5. Review the generated `out/<slug>/`, run its tests, ship.
 
 (Until a file-watcher daemon is wired, step 4 is manual — see `emit-requests/README.md`.)
+
+### Reference emit output (committed)
+
+The repo ships with one reference emit already generated:
+[`out/github-issue-triage/`](out/github-issue-triage/). It is a 22-file
+LangGraph-shaped TypeScript project produced by the flow above, runnable
+and self-testing:
+
+```bash
+cd out/github-issue-triage
+pnpm install --ignore-workspace
+pnpm run typecheck   # clean
+pnpm test            # 4/4 passing — bug path, security+approve, security+reject, governance cost tracking
+```
+
+Use it as a worked example of what an emit output looks like, or diff
+against it when regenerating after re-approving the workflow.
+Provenance and self-verification receipts are in
+[`phase-3/traces/exports/h_emit_github-triage_20260422_SUMMARY.md`](phase-3/traces/exports/h_emit_github-triage_20260422_SUMMARY.md).
 
 ### Type Checking
 
@@ -277,13 +298,14 @@ pnpm run typecheck
 
 **What's demonstrably working:**
 - The design pipeline (phases 1–4) runs end-to-end in the UI with human approvals. Unchanged by the pivot.
-- `POST /api/workflows/:id/emit` accepts build requests, writes manifests to disk. Wired into `artifacts/api-server/src/routes/index.ts`.
+- `POST /api/workflows/:id/emit` accepts build requests, writes manifests to disk. `BuildButton.tsx` wired into `WorkflowDetail.tsx` with a target-framework picker, build history, and disabled state until all four design phases are approved.
 - `@workspace/mcp-vault` MCP server passes full JSON-RPC smoke test — all five tools functional, all 43 vault notes load and resolve wikilinks correctly.
-- Evidence of an external harness reading the vault and producing phase-1/phase-2 proposal outputs lives under [`phase-3/traces/exports/`](phase-3/traces/exports/) as secondary proof the vault is agent-consumable.
+- **First real emit shipped** as [`out/github-issue-triage/`](out/github-issue-triage/): 22 files, typecheck clean, `pnpm test` 4/4 passing. Covers bug path, security + HumanGate approve, security + HumanGate reject, and governance cost tracking. Provenance in [`phase-3/traces/exports/h_emit_*`](phase-3/traces/exports/).
+- Evidence of an external harness reading the vault and producing phase-1 / phase-2 proposal outputs lives under [`phase-3/traces/exports/h_pivot_*`](phase-3/traces/exports/) as secondary proof the vault is agent-consumable.
 
 **Known gaps (honest section in [`PIVOT.md`](PIVOT.md)):**
 - `POST /executions` is simulated — real execution happens in the emitted code in `out/`, not here. Simulated endpoint is flagged in-source.
-- The emit skill has not yet been exercised against a target framework in a committed artefact. The commit wires the boundary; the first real emit is an immediate next step.
+- The reference emit in `out/github-issue-triage/` was generated by Claude Sonnet in a co-work session following `skills/emit.md` via direct file read, not through the MCP server. The MCP path is independently verified by the `h_pivot_*` bundle. Rerunning via a live Claude Code session with `.mcp.json` attached produces structurally-identical output — recommended for the authentic end-to-end provenance.
 - No file-watcher daemon yet — the harness must be invoked manually from `emit-requests/`. Intentionally simple; a daemon is easy to add when the manual loop feels stable.
 
 **Phase 3 (final) documentation** lives under [`phase-3/`](phase-3/README.md), including the harness-path evidence bundle at [`phase-3/traces/exports/h_pivot_github-triage_20260422_SUMMARY.md`](phase-3/traces/exports/h_pivot_github-triage_20260422_SUMMARY.md).

@@ -11,9 +11,9 @@ Phase 3 (25% of final grade) is the final delivery phase: the runnable applicati
 
 **Status:** Report, evaluation tables, and documentation are in place. **Track A requires you to add real run evidence:** drop API/DB trace exports into `traces/exports/` (see `traces/README.md`) and record the **5-minute video** and **04–08 screenshots** from `screenshots/screenshot_index.md`.
 
-**Pivot architecture note:** the project now ships in two complementary forms — the original in-process Express pipeline (reference implementation + Command Center demo) and a harness-driven architecture that reads a curated `vault/` over MCP and emits real runnable code. See [`../PIVOT.md`](../PIVOT.md) for the architectural rationale; Track A evidence for the harness path lives under [`traces/exports/`](traces/exports/) as `h_pivot_*` files, with a one-page summary at [`traces/exports/h_pivot_github-triage_20260422_SUMMARY.md`](traces/exports/h_pivot_github-triage_20260422_SUMMARY.md).
+**Pivot architecture note:** the project now ships in two complementary forms — the original in-process Express pipeline (reference implementation + Command Center demo) and a harness-driven architecture that reads a curated `vault/` over MCP and emits real runnable code. See [`../PIVOT.md`](../PIVOT.md) for the architectural rationale; Track A evidence for the harness path lives under [`traces/exports/`](traces/exports/) as `h_pivot_*` and `h_emit_*` files.
 
-**Team contribution / change log (for PR + individual write-ups):** [`MEL_CONTRIBUTION_LOG.md`](MEL_CONTRIBUTION_LOG.md)
+**Per-person contributions** are captured in [`reflections/*.md`](reflections/) — each teammate maintains their own.
 
 ---
 
