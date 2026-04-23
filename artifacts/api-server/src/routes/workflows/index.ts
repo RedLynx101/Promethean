@@ -11,6 +11,7 @@ import {
   DeleteWorkflowParams,
   ListWorkflowVersionsParams,
 } from "@workspace/api-zod";
+import { layoutNodes } from "../../lib/agents/layout";
 
 const router: IRouter = Router();
 
@@ -129,6 +130,32 @@ router.patch("/workflows/:id", async (req, res): Promise<void> => {
   }
 
   res.json(serializeWorkflow(workflow));
+});
+
+router.post("/workflows/:id/relayout", async (req, res): Promise<void> => {
+  const params = GetWorkflowParams.safeParse({ id: req.params.id });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [workflow] = await db.select().from(workflowsTable).where(eq(workflowsTable.id, params.data.id));
+  if (!workflow) {
+    res.status(404).json({ error: "Workflow not found" });
+    return;
+  }
+
+  const nodes = (Array.isArray(workflow.nodes) ? workflow.nodes : []) as Array<{ id: string; position?: { x: number; y: number }; data?: Record<string, unknown> }>;
+  const edges = (Array.isArray(workflow.edges) ? workflow.edges : []) as Array<{ source: string; target: string }>;
+  const relaid = layoutNodes(nodes, edges);
+
+  const [updated] = await db
+    .update(workflowsTable)
+    .set({ nodes: relaid as unknown, updatedAt: new Date() })
+    .where(eq(workflowsTable.id, params.data.id))
+    .returning();
+
+  res.json(serializeWorkflow(updated));
 });
 
 router.delete("/workflows/:id", async (req, res): Promise<void> => {

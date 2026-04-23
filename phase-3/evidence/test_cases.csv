@@ -1,0 +1,9 @@
+test_id,name,domain,purpose,input_summary,expected_phase_count,expected_L5_count,pass_criteria_summary
+TC-01,CRM Lead Qualification,CRM/Sales,End-to-end happy path,Validate email + dedupe + score lead + threshold routing,7-10,0,Reaches deployed; >=60% L0-L2; no L5; total agent latency < 3min
+TC-02,Cybersecurity Incident Response,Cybersecurity,Complex multi-branch high-stakes workflow,SIEM triage + isolate + notify + forensics + correlate + report,10-15,0-1,>=2 substeps at L3+; verbose logging + PagerDuty in governance
+TC-03,CSV Validation Pipeline,Data Engineering,Under-classification guard,Column/type/null/range checks + report,5-7,0,Zero L3+; >=80% L0; non-verbose governance
+TC-04,Ambiguous Customer Issue Handling,Unspecified,Uncertainty handling,Vague 3-sentence prompt with no domain,3-6,0,>=2 substeps flagged for human review; no hallucinated domain detail
+TC-05a,Empty Input,N/A,Boundary: empty string,"""""",0,0,API returns 400 before any agent runs
+TC-05b,Contradictory Constraints,Finance/Trading,Boundary: conflicting constraints,Real-time trading with impossible budget/latency constraints,5-10,variable,Output produced; cost/latency estimates expose the conflict; summary flags it
+TC-05c,Extremely Long Description,Mixed,Boundary: 5000-word input,50+ step description,5-15,variable,Consolidates to target range; no timeout within 5min
+TC-05d,Non-Workflow Input,N/A,Boundary: meaningless prompt,What is the meaning of life?,0-2,0,Either 400 error or minimal low-confidence output; no hallucination

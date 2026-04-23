@@ -1,6 +1,7 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { type DecompositionResult } from "./types";
 import { DecompositionResultSchema, type PrometheanNodeSchema, type PrometheanEdgeSchema } from "./schemas";
+import { layoutNodes } from "./layout";
 import { logger } from "../logger";
 import { z } from "zod";
 
@@ -87,11 +88,12 @@ Decompose this into discrete workflow steps.`;
   const raw = JSON.parse(content);
   const parsed = DecompositionResultSchema.parse(raw);
 
-  // Ensure nodes have proper positions and status
-  parsed.nodes = parsed.nodes.map((node: NodeType, i: number) => ({
+  // Normalize node shape (type + idle status). Position is replaced below by
+  // the auto-layout — we ignore whatever the LLM emitted because it routinely
+  // overlapped nodes.
+  parsed.nodes = parsed.nodes.map((node: NodeType) => ({
     ...node,
     type: "custom",
-    position: node.position ?? { x: 100 + (i % 3) * 250, y: 100 + Math.floor(i / 3) * 200 },
     data: { ...node.data, status: node.data.status ?? "idle" },
   }));
 
@@ -100,6 +102,9 @@ Decompose this into discrete workflow steps.`;
     type: edge.type ?? "default",
     data: edge.data ?? {},
   }));
+
+  // Topological auto-layout — guarantees no overlapping nodes.
+  parsed.nodes = layoutNodes(parsed.nodes, parsed.edges);
 
   return parsed;
 }

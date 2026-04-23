@@ -1,0 +1,9 @@
+test_id,run_timestamp,pipeline_completed,phase_reached,substep_count,L0_count,L1_count,L2_count,L3_count,L4_count,L5_count,decompose_latency_ms,select_latency_ms,orchestrate_latency_ms,govern_latency_ms,total_agent_latency_ms,schema_validation_pass,estimated_cost_per_run_usd,baseline_L0_cost_usd,baseline_L4_cost_usd,baseline_L5_cost_usd,expert_agreement_pct,confidence_mean,rejections_required,notes
+TC-01,,,,,,,,,,,,,,,,,,,,,,,,
+TC-02,,,,,,,,,,,,,,,,,,,,,,,,
+TC-03,,,,,,,,,,,,,,,,,,,,,,,,
+TC-04,,,,,,,,,,,,,,,,,,,,,,,,
+TC-05a,,,,,,,,,,,,,,,,,,,,,,,,
+TC-05b,,,,,,,,,,,,,,,,,,,,,,,,
+TC-05c,,,,,,,,,,,,,,,,,,,,,,,,
+TC-05d,,,,,,,,,,,,,,,,,,,,,,,,
