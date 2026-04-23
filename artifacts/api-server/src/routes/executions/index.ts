@@ -1,3 +1,20 @@
+/**
+ * LEGACY / SIMULATED EXECUTION SURFACE
+ * =====================================================================
+ * POST /executions in this router does NOT run a node graph. It writes
+ * plausible cost/latency rows (Math.random-based) so the Command Center
+ * UI has data to render. This is kept for demo continuity only.
+ *
+ * Real execution under the pivot architecture happens via the harness
+ * path: skills/emit.md translates an approved blueprint into runnable
+ * code (LangGraph / Inngest / Temporal / n8n / Claude Agent SDK / plain
+ * script), which is then invoked by the harness or deployed independently.
+ *
+ * See PIVOT.md at the repo root for the rationale and the intended
+ * replacement path (a proposals/approved/ file-watcher that resumes the
+ * harness on human approval and writes real execution records here).
+ * =====================================================================
+ */
 import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db } from "@workspace/db";
@@ -87,6 +104,10 @@ router.post("/executions", async (req, res): Promise<void> => {
     return;
   }
 
+  // SIMULATED — see header comment. The fields below are synthesised so
+  // the Command Center has a populated timeline; they are NOT measurements
+  // from a real run. Real executions come from the harness emit path
+  // (skills/emit.md → generated framework code).
   const latencyMs = workflow.estimatedLatencyMs ?? Math.floor(Math.random() * 8000) + 2000;
   const costUsd = workflow.estimatedCostPerRun != null
     ? Number(workflow.estimatedCostPerRun)

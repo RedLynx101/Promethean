@@ -1,104 +1,86 @@
-# PROMETHEAN — Phase 3 Deliverables (Placeholder)
+# PROMETHEAN — Phase 3 Deliverables (Final)
 
 ### Track A: Technical Build
-### Expected Due Date: Per Canvas Schedule
+### April 2026
 
 ---
 
 ## Overview
 
-Phase 3 (25% of final grade) is the final delivery phase. The goal is to deliver the finished artifact with evidence that it works, where it fails, and how it was improved.
+Phase 3 (25% of final grade) is the final delivery phase: the runnable application, evidence that it works (and where it does not), evaluation materials, and portfolio-ready documentation.
+
+**Status:** Report, evaluation tables, and documentation are in place. **Track A requires you to add real run evidence:** drop API/DB trace exports into `traces/exports/` (see `traces/README.md`) and record the **5-minute video** and **04–08 screenshots** from `screenshots/screenshot_index.md`.
+
+**Pivot architecture note:** the project now ships in two complementary forms — the original in-process Express pipeline (reference implementation + Command Center demo) and a harness-driven architecture that reads a curated `vault/` over MCP and emits real runnable code. See [`../PIVOT.md`](../PIVOT.md) for the architectural rationale; Track A evidence for the harness path lives under [`traces/exports/`](traces/exports/) as `h_pivot_*` files, with a one-page summary at [`traces/exports/h_pivot_github-triage_20260422_SUMMARY.md`](traces/exports/h_pivot_github-triage_20260422_SUMMARY.md).
+
+**Team contribution / change log (for PR + individual write-ups):** [`MEL_CONTRIBUTION_LOG.md`](MEL_CONTRIBUTION_LOG.md)
 
 ---
 
-## Expected Phase 3 Deliverables
+## Deliverable index
 
-### 1. Final Artifact
-- The complete, runnable Promethean Studio application
-- All features functional: Command Center, Workflow Wizard, Visual Editor, Template Library
-- Full 4-agent pipeline operational end-to-end
-- Deployed and accessible via live URL
+| # | Rubric item | Location |
+|---|-------------|----------|
+| 1 | Final artifact (code) | Repository root — `README.md`, `artifacts/promethean`, `artifacts/api-server` |
+| 2 | Five-minute video | **`video_outline.md`** (script); upload video per Canvas |
+| 3 | Final report | **`final_report.md`** |
+| 4 | Evidence package (5+ scenarios, 2+ failures, traces, screenshots) | **`evidence/`**, **`traces/`**, **`screenshots/screenshot_index.md`** |
+| 5 | `test_cases` + `evaluation_results` + `failure_log` + `version_notes` | **`evidence/test_cases.md`**, **`evidence/evaluation_results.csv`**, **`evidence/failure_log.md`**, **`evidence/version_notes.md`** |
+| 6 | Failure analysis | **`evidence/failure_log.md`** + §6 in **`final_report.md`** |
+| 7 | Individual reflections | **`reflections/*.md`** |
+| 8 | Portfolio-ready (README, architecture, screenshots, AI usage) | Root **`README.md`**, **`final_report.md`**, **`AI_USAGE.md`**, screenshot index |
 
-### 2. Five-Minute Project Video
-- Problem statement and target user
-- Architecture overview
-- Live demo of the main workflow (start to finish)
-- Evidence of multi-agent coordination
-- One failure case or boundary behavior
-- Final output / deployed workflow
-
-### 3. Final Report
-- Problem and user
-- Architecture and design choices
-- Implementation summary
-- Evaluation setup and methodology
-- Results
-- Failure analysis
-- Governance and safety reflection
-- Lessons learned and future improvements
-
-### 4. Evidence Package
-- At least 5 completed test scenarios with results
-- At least 2 documented failure cases
-- Interaction traces with JSON data structures
-- Screenshots of key pipeline states
-- Baseline comparison data (Always-L0, Always-L4, Always-L5)
-
-### 5. Evaluation Materials
-- `test_cases.csv` or `test_cases.md` — the 5+ test scenarios
-- `evaluation_results.csv` — results for each test case
-- `failure_log.md` — documented failure cases with analysis
-- `version_notes.md` — version history and change log
-
-### 6. Failure Analysis
-- At least 2 concrete failure cases
-- Root cause analysis for each failure
-- What changed after testing
-- How failures informed design improvements
-
-### 7. Individual Contribution Reflections
-- Each team member's reflection on their contributions
-- Lessons learned individually
-- What they would do differently
-
-### 8. Portfolio-Ready Package
-- Clean README with setup instructions
-- Architecture diagram
-- Screenshot index (4–8 captioned screenshots)
-- AI usage disclosure (AI_USAGE.md)
-- Organized folder structure following course guidelines
+**Live URL:** Record deployment link in the Canvas submission and in team notes; hosting is environment-specific (not committed here).
 
 ---
 
-## Folder Structure (Planned)
+## Folder structure (actual)
 
 ```
 phase-3/
-├── final_report.md (or .pdf)
+├── README.md
+├── final_report.md
+├── video_outline.md
+├── AI_USAGE.md
 ├── evidence/
 │   ├── test_cases.md
 │   ├── evaluation_results.csv
 │   ├── failure_log.md
 │   └── version_notes.md
 ├── traces/
-│   ├── trace_crm_lead_qualification.json
-│   ├── trace_cybersecurity_incident.json
-│   └── ...
+│   ├── README.md
+│   ├── exports/
+│   │   ├── h_pivot_github-triage_20260422_SUMMARY.md          (harness-path evidence bundle summary)
+│   │   ├── h_pivot_github-triage_20260422_phase1-decomposition.md
+│   │   ├── h_pivot_github-triage_20260422_phase2-classification.md
+│   │   ├── h_pivot_mcp-vault_20260422_jsonrpc-trace.jsonl
+│   │   └── (add JSON from GET /api/pipeline/:id/status or POST responses for in-process scenarios)
+│   └── illustrative/
+│       ├── trace_crm_lead_qualification.json
+│       ├── trace_cybersecurity_incident.json
+│       ├── trace_csv_validation.json
+│       ├── trace_ambiguous_workflow.json
+│       └── trace_adversarial_edge.json
 ├── screenshots/
-│   ├── 01_command_center.png
-│   ├── 02_workflow_wizard.png
-│   ├── 03_visual_editor.png
-│   ├── 04_template_library.png
-│   ├── 05_pipeline_approval.png
-│   ├── 06_governance_config.png
 │   └── screenshot_index.md
-├── reflections/
-│   └── [individual reflection files]
-└── AI_USAGE.md
+└── reflections/
+    ├── noah_hicks.md
+    ├── rushabh_kankariya.md
+    ├── vishnu_bala.md
+    ├── yiying_lu.md
+    └── mel_wong.md
 ```
+
+**Full per-stage JSON examples** (CRM walkthrough) also live in `phase-2/08-interaction-trace.md`.
 
 ---
 
-## Status
+## Quick start (reviewers)
 
-Phase 3 work has not yet begun. This placeholder will be updated as deliverables are completed.
+1. Read **`final_report.md`** for the full narrative.
+2. Open **`evidence/evaluation_results.csv`** for the metrics table.
+3. Open **`traces/exports/`** for **captured** pipeline state; use **`traces/illustrative/`** only as a schema hint. For CRM-level JSON examples, see **`phase-2/08-interaction-trace.md`**.
+
+---
+
+_Repository version at submission: see `evidence/version_notes.md`._

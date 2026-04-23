@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "promethean-vault": {
+      "command": "node",
+      "args": ["./artifacts/mcp-vault/dist/index.js"],
+      "env": {
+        "VAULT_DIR": "./vault",
+        "MCP_VAULT_LOG_LEVEL": "info"
+      }
+    }
+  }
+}
