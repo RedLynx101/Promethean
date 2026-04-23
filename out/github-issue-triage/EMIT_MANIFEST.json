@@ -1,0 +1,85 @@
+{
+  "status": "ok",
+  "requestId": "github-issue-triage-2026-04-22T22-57-00-000Z",
+  "workflowId": "00000000-0000-0000-0000-000000000001",
+  "workflowName": "GitHub Issue Triage",
+  "targetFramework": "langgraph-js",
+  "targetDir": "out/github-issue-triage",
+  "emittedAt": "2026-04-22T23:27:20.000Z",
+  "filesWritten": [
+    "README.md",
+    "package.json",
+    "tsconfig.json",
+    ".env.example",
+    ".gitignore",
+    "promethean.json",
+    "src/state.ts",
+    "src/schemas.ts",
+    "src/governance.ts",
+    "src/workflow.ts",
+    "src/index.ts",
+    "src/nodes/validate.ts",
+    "src/nodes/classify.ts",
+    "src/nodes/manualTriageFallback.ts",
+    "src/nodes/applyLabels.ts",
+    "src/nodes/assignTeam.ts",
+    "src/nodes/draftResponse.ts",
+    "src/nodes/pageOncall.ts",
+    "src/nodes/postComment.ts",
+    "src/nodes/securityGate.ts",
+    "tests/smoke.test.ts",
+    "EMIT_MANIFEST.json"
+  ],
+  "typecheck": {
+    "command": "pnpm run typecheck",
+    "status": "passed"
+  },
+  "tests": {
+    "framework": "vitest",
+    "command": "pnpm test",
+    "testFiles": 1,
+    "testCases": 4,
+    "passed": 4,
+    "failed": 0,
+    "covers": [
+      "bug severity → non-security parallel fan-out → post-comment",
+      "security severity + HumanGate approve → labels + assign + draft + page + comment",
+      "security severity + HumanGate reject → terminate without side-effects",
+      "governance cost tracking stays under costLimitPerRun"
+    ]
+  },
+  "vaultNotesConsulted": [
+    "integration-github-api",
+    "integration-webhook-receiver",
+    "integration-anthropic-messages",
+    "integration-pagerduty",
+    "integration-slack-api",
+    "pattern-parallel",
+    "pattern-conditional",
+    "pattern-error-handling",
+    "pattern-retries",
+    "pattern-human-gate",
+    "L0-deterministic",
+    "L2-language-understanding",
+    "L3-single-llm-agent",
+    "HumanGate",
+    "governance-cost-limit",
+    "governance-execution-timeout",
+    "governance-latency",
+    "governance-logging",
+    "governance-snapshots",
+    "governance-alerting"
+  ],
+  "honestyNotes": [
+    "External calls (Anthropic, GitHub, PagerDuty) are stubbed by default. Flip LIVE=true after wiring real auth.",
+    "Graph runtime is an in-repo minimal walker, not @langchain/langgraph. Node signatures are compatible; swap mechanically when productionizing.",
+    "HumanGate resumes via filesystem signals. Replace with Slack approval-button webhook for production.",
+    "Webhook receiver in src/index.ts is scaffold-grade — no rate-limiting, no queue-based run deferral."
+  ],
+  "nextActionsForUser": [
+    "cd out/github-issue-triage && pnpm install && pnpm test",
+    "Fill in .env, set LIVE=true, wire real Anthropic/GitHub/PagerDuty credentials.",
+    "Replace the in-repo graph walker in src/workflow.ts with @langchain/langgraph when ready.",
+    "Wire HumanGate to Slack approval-button per vault/integrations/integration-slack-api.md."
+  ]
+}

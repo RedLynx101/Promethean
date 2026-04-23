@@ -2,6 +2,7 @@ import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { STATUS_COLORS } from "@/lib/constants";
+import BuildButton from "@/components/BuildButton";
 import {
   Play,
   ExternalLink,
@@ -128,6 +129,7 @@ export default function WorkflowDetail() {
             <ExternalLink className="w-4 h-4" />
             Open Editor
           </button>
+          {id && <BuildButton workflowId={id} phase={workflow?.phase} />}
           <button
             onClick={() => runWorkflow.mutate()}
             disabled={runWorkflow.isPending || workflow?.phase !== "deployed"}
@@ -140,6 +142,7 @@ export default function WorkflowDetail() {
               letterSpacing: "0.05em",
               fontSize: "11px",
             }}
+            title="Simulated execution (legacy demo surface). Use BUILD to generate real runnable code."
           >
             <Play className="w-4 h-4" />
             RUN

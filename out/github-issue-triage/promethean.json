@@ -1,0 +1,72 @@
+{
+  "requestId": "github-issue-triage-2026-04-22T22-57-00-000Z",
+  "workflowId": "00000000-0000-0000-0000-000000000001",
+  "workflowName": "GitHub Issue Triage",
+  "workflowVersion": "0.1.0",
+  "targetFramework": "langgraph-js",
+  "targetDir": "out/github-issue-triage",
+  "requestedAt": "2026-04-22T22:57:00.000Z",
+  "status": "pending",
+  "workflow": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "GitHub Issue Triage",
+    "description": "Classify severity of new GitHub issues, draft a triage reply, page on-call for security, assign + label automatically for non-security.",
+    "domain": "Engineering",
+    "nodes": [
+      { "id": "trigger-1", "type": "custom", "position": { "x": 100, "y": 300 }, "data": { "label": "GitHub Issue Opened", "description": "Webhook receiver for issues.opened. HMAC verify + delivery-ID idempotency.", "systemLevel": 0, "confidence": 98, "tools": ["integration-github-api", "integration-webhook-receiver"], "errorHandling": "alert-and-fail", "status": "idle", "nodeCategory": "trigger" } },
+      { "id": "validate-1", "type": "custom", "position": { "x": 350, "y": 300 }, "data": { "label": "Validate & Extract", "description": "Zod extract of issue payload.", "systemLevel": 0, "confidence": 97, "tools": ["zod"], "errorHandling": "alert-and-fail", "status": "idle" } },
+      { "id": "classify-1", "type": "custom", "position": { "x": 600, "y": 300 }, "data": { "label": "Classify Severity", "description": "Four-way intent classification: bug / feature-request / question / security.", "systemLevel": 2, "confidence": 78, "tools": ["integration-anthropic-messages"], "errorHandling": "fallback-to-l0", "status": "idle" } },
+      { "id": "manual-triage-fallback-1", "type": "custom", "position": { "x": 600, "y": 540 }, "data": { "label": "Manual Triage Fallback", "description": "L0 handler for classifier failures.", "systemLevel": 0, "confidence": 97, "tools": ["integration-github-api"], "errorHandling": "alert-and-fail", "status": "idle" } },
+      { "id": "security-gate-1", "type": "custom", "position": { "x": 850, "y": 780 }, "data": { "label": "Security Confirm (HumanGate)", "description": "Pauses the security branch for human approval in Slack.", "systemLevel": null, "confidence": 99, "tools": ["integration-slack-api"], "errorHandling": "route-to-human-gate", "status": "idle", "nodeCategory": "human_gate" } },
+      { "id": "apply-labels-1", "type": "custom", "position": { "x": 1100, "y": 120 }, "data": { "label": "Apply Labels", "description": "Map classification -> label set.", "systemLevel": 0, "confidence": 98, "tools": ["integration-github-api"], "errorHandling": "retry-with-backoff", "status": "idle" } },
+      { "id": "assign-team-1", "type": "custom", "position": { "x": 1100, "y": 300 }, "data": { "label": "Assign Team", "description": "Map classification -> team.", "systemLevel": 0, "confidence": 98, "tools": ["integration-github-api"], "errorHandling": "retry-with-backoff", "status": "idle" } },
+      { "id": "draft-response-1", "type": "custom", "position": { "x": 1100, "y": 480 }, "data": { "label": "Draft Triage Response", "description": "LLM drafts a short reply in the issue's voice.", "systemLevel": 3, "confidence": 88, "tools": ["integration-anthropic-messages"], "errorHandling": "alert-and-skip", "status": "idle" } },
+      { "id": "page-oncall-1", "type": "custom", "position": { "x": 1100, "y": 780 }, "data": { "label": "Page On-Call via PagerDuty", "description": "PagerDuty Events v2 trigger, fires only from approved security branch.", "systemLevel": 0, "confidence": 97, "tools": ["integration-pagerduty"], "errorHandling": "retry-with-backoff", "status": "idle" } },
+      { "id": "post-comment-1", "type": "custom", "position": { "x": 1350, "y": 300 }, "data": { "label": "Post Issue Comment", "description": "Post drafted triage reply on the issue. Idempotent PATCH.", "systemLevel": 0, "confidence": 96, "tools": ["integration-github-api"], "errorHandling": "retry-with-backoff", "status": "idle" } },
+      { "id": "end-1", "type": "custom", "position": { "x": 1600, "y": 540 }, "data": { "label": "Complete Triage", "description": "Terminal. Emits result flags.", "systemLevel": 0, "confidence": 99, "tools": [], "errorHandling": "alert-and-fail", "status": "idle" } }
+    ],
+    "edges": [
+      { "id": "e-trigger-validate", "source": "trigger-1", "target": "validate-1", "type": "default", "data": { "label": "on issues.opened", "condition": null } },
+      { "id": "e-validate-classify", "source": "validate-1", "target": "classify-1", "type": "default", "data": { "label": "validated", "condition": null } },
+      { "id": "e-classify-labels-nonsec", "source": "classify-1", "target": "apply-labels-1", "type": "parallel", "data": { "label": "non-security", "condition": "severity !== 'security'" } },
+      { "id": "e-classify-assign-nonsec", "source": "classify-1", "target": "assign-team-1", "type": "parallel", "data": { "label": "non-security", "condition": "severity !== 'security'" } },
+      { "id": "e-classify-draft-nonsec", "source": "classify-1", "target": "draft-response-1", "type": "parallel", "data": { "label": "non-security", "condition": "severity !== 'security'" } },
+      { "id": "e-classify-gate", "source": "classify-1", "target": "security-gate-1", "type": "conditional", "data": { "label": "if security", "condition": "severity === 'security'" } },
+      { "id": "e-classify-fallback", "source": "classify-1", "target": "manual-triage-fallback-1", "type": "error", "data": { "label": "on classify failure", "condition": null } },
+      { "id": "e-gate-labels", "source": "security-gate-1", "target": "apply-labels-1", "type": "parallel", "data": { "label": "on approve", "condition": "gate.approved" } },
+      { "id": "e-gate-assign", "source": "security-gate-1", "target": "assign-team-1", "type": "parallel", "data": { "label": "on approve", "condition": "gate.approved" } },
+      { "id": "e-gate-draft", "source": "security-gate-1", "target": "draft-response-1", "type": "parallel", "data": { "label": "on approve", "condition": "gate.approved" } },
+      { "id": "e-gate-page", "source": "security-gate-1", "target": "page-oncall-1", "type": "default", "data": { "label": "on approve", "condition": "gate.approved" } },
+      { "id": "e-gate-reject-loop", "source": "security-gate-1", "target": "classify-1", "type": "loop", "data": { "label": "on reject + feedback", "condition": "!gate.approved" } },
+      { "id": "e-labels-comment", "source": "apply-labels-1", "target": "post-comment-1", "type": "default", "data": { "label": "labels applied", "condition": null } },
+      { "id": "e-assign-comment", "source": "assign-team-1", "target": "post-comment-1", "type": "default", "data": { "label": "team assigned", "condition": null } },
+      { "id": "e-draft-comment", "source": "draft-response-1", "target": "post-comment-1", "type": "default", "data": { "label": "draft ready", "condition": null } },
+      { "id": "e-fallback-end", "source": "manual-triage-fallback-1", "target": "end-1", "type": "default", "data": { "label": "manually triaged", "condition": null } },
+      { "id": "e-comment-end", "source": "post-comment-1", "target": "end-1", "type": "default", "data": { "label": "posted", "condition": null } },
+      { "id": "e-page-end", "source": "page-oncall-1", "target": "end-1", "type": "default", "data": { "label": "paged", "condition": null } }
+    ],
+    "governanceConfig": {
+      "loggingLevel": "verbose",
+      "autoSnapshot": true,
+      "latencyThreshold": 10000,
+      "costThreshold": 0.05,
+      "errorRateThreshold": 0.05,
+      "alertChannels": ["slack", "email"],
+      "costLimitPerRun": 0.5,
+      "executionTimeoutMs": 14400000
+    },
+    "systemTypeSummary": { "L0": 7, "L2": 1, "L3": 1, "HumanGate": 1 },
+    "estimatedCostPerRun": 0.011,
+    "estimatedLatencyMs": 3700
+  },
+  "harnessInstructions": {
+    "skillToLoad": "skills/emit.md",
+    "mcpServer": "promethean-vault",
+    "nextSteps": [
+      "Load skills/emit.md.",
+      "Validate every tool referenced in nodes[*].data.tools[] against vault/integrations/ via vault_get.",
+      "Generate code into out/github-issue-triage/.",
+      "Write out/github-issue-triage/EMIT_MANIFEST.json with status + filesWritten when done."
+    ]
+  }
+}
