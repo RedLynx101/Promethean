@@ -13,13 +13,14 @@ const SYSTEM_PROMPT = `You are the Decomposition Agent for Promethean — a work
 Your job is to analyze a workflow description and decompose it into discrete, atomic substeps that can be individually classified on the automation spectrum.
 
 Rules:
-1. Break the workflow into 5-15 distinct steps (nodes)
-2. Each step must be specific and atomic — one action, one responsibility
-3. Include trigger nodes (where the workflow begins) and end/result nodes
-4. Identify natural dependencies and sequential/parallel flows
-5. Use clear, action-oriented names for each step (verb + noun)
-6. Create logical flow edges connecting the steps
-7. Edge types must be one of: "default", "conditional", "error", "parallel", "loop"
+1. Break the workflow into 5-15 distinct steps (nodes). This is a hard cap — NEVER emit more than 15 nodes. For long or complex inputs, consolidate related operations into a single coarser step rather than exceeding the cap.
+2. If the input is NOT a workflow description (e.g. a question, a statement of opinion, a greeting, or arbitrary text that does not describe a process with steps), return an empty nodes array, an empty edges array, and set summary to "Input does not describe a workflow." Do not invent a workflow to fit non-workflow input.
+3. Each step must be specific and atomic — one action, one responsibility
+4. Include trigger nodes (where the workflow begins) and end/result nodes
+5. Identify natural dependencies and sequential/parallel flows
+6. Use clear, action-oriented names for each step (verb + noun)
+7. Create logical flow edges connecting the steps
+8. Edge types must be one of: "default", "conditional", "error", "parallel", "loop"
 
 Return ONLY valid JSON matching this exact structure:
 {
@@ -74,7 +75,7 @@ Decompose this into discrete workflow steps.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-5.4-mini-2026-03-17",
-    max_completion_tokens: 8192,
+    max_completion_tokens: 16384,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userPrompt },

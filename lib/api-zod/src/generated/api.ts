@@ -327,8 +327,8 @@ export const ListWorkflowVersionsResponse = zod.array(
  * @summary Start the agent pipeline for a workflow
  */
 export const StartPipelineBody = zod.object({
-  workflowId: zod.string(),
-  description: zod.string(),
+  workflowId: zod.string().min(1),
+  description: zod.string().min(1),
   domain: zod.string().optional(),
   constraints: zod
     .object({

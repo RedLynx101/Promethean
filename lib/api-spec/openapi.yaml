@@ -897,11 +897,14 @@ components:
     # ─── Pipeline ─────────────────────────────────────────────────────────────
     StartPipelineBody:
       type: object
+      required: [workflowId, description]
       properties:
         workflowId:
           type: string
+          minLength: 1
         description:
           type: string
+          minLength: 1
         domain:
           type: string
         constraints:
