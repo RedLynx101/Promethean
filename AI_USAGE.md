@@ -78,16 +78,21 @@ This document discloses all AI tools used in the development of Promethean Studi
 - Auditing Phase 2 documentation for model-version consistency and producing batch edits across 8 files
 - Drafting the Phase 3 screenshot index and assisting with repo structure alignment to the course-mandated layout
 - Cross-referencing the Phase 2 professor feedback against the course rubric to produce a per-person Phase 3 work plan
+- Authoring the CRM baseline-comparison tooling — `phase-3/scripts/run_crm_baseline.sh` (9-run HTTP pipeline driver) and `phase-3/scripts/compute_baseline_comparison.py` (trace parser → `baseline_comparison_crm.csv`)
+- Drafting the baseline-comparison analysis in `phase-3/evidence/baseline_comparison_crm.md` and the individual contribution reflection in `phase-3/reflections/yiying_lu.md`
 
 **What was changed manually afterward:**
 - All suggested edits reviewed line-by-line before committing
 - ASCII diagram alignment verified manually after automated find/replace, with width adjustments applied where needed
 - Branch commit messages and PR descriptions written by the team member
+- Baseline-comparison metric definitions (especially the `agent2_classified_count` vs `agent4_injected_gate_count` split and the L0-infeasibility rule) specified by the team member before the scripts were written; outlier interpretation for `tc-01-v2-r3` reviewed and approved against the raw trace JSONs before landing in the analysis
+- Reflection content (role framing, Phase 2 contributions, hours) written/edited by the team member; AI draft used only as a starting scaffold
 
 **What was independently verified:**
 - `ripgrep` search confirmed zero remaining `GPT-5.2` references in the Phase 2 docs after the consistency fix
 - `git diff` reviewed before the fix branch was pushed
 - Screenshot captions and cross-references hand-verified against the actual UI
+- Every number in `baseline_comparison_crm.md` traced back to a row in `baseline_comparison_crm.csv`; CSV rows spot-checked against the underlying trace JSONs in `phase-3/traces/tc-01*/`
 
 ---
 
