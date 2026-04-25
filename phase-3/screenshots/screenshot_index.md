@@ -5,17 +5,17 @@
 This index documents every screenshot included in the Phase 3 submission. Each entry lists:
 - **File** — relative path to the image
 - **Caption** — one-line description suitable for the final report
-- **Agent / Phase** — which part of the 4-agent pipeline or system surface it demonstrates
+- **Surface** — which part of the system the screenshot captures
 - **Evidence value** — which rubric item it supports and why it is non-redundant
 - **Reproduction** — exact steps to recapture the screenshot locally
 
-Screenshots are stored as `.jpg` (existing captures) or `.png` (new Phase 3 captures). Phase 3 captures follow the numbered convention `NN_short_name.png` so ordering matches the final report narrative.
+Screenshots are stored as `.jpg` (Phase 2 captures, at repo root under `screenshots/`) or `.png` (Phase 3 captures, in this folder). Phase 3 captures follow the numbered convention `NN_short_name.png` so ordering matches the final report narrative.
 
 ---
 
-## 1. Existing screenshots (captured during Phase 2)
+## 1. Phase 2 screenshots (reused unchanged)
 
-These three were captured while the UI was first built and are reused unchanged for Phase 3. They live at the repo root under `screenshots/` so the existing demo video and Phase 2 bundle continue to reference them.
+These three were captured during Phase 2 and are reused for Phase 3. They live at the repo root under `screenshots/` so the existing demo video and Phase 2 bundle continue to reference them.
 
 ### 1.1 `screenshots/dashboard.jpg` — Command Center
 
@@ -24,7 +24,7 @@ These three were captured while the UI was first built and are reused unchanged 
 | Caption | Fleet-level view of all workflows with 24-hour execution metrics, latency timeline, active-alert feed, and per-workflow success indicators. |
 | Surface | Command Center (post-pipeline, operational monitoring) |
 | Evidence value | Demonstrates the "portfolio-ready UI" required by rubric §8 and shows that governance telemetry (success rate, latency, cost, alerts) is surfaced to operators rather than hidden in logs. |
-| Reproduction | `pnpm dev` at repo root → open `http://localhost:5000/` → left nav **Command Center**. Requires at least one executed workflow in the DB to populate the timeline and fleet list. |
+| Reproduction | `pnpm --filter @workspace/api-server run dev` and `pnpm --filter @workspace/promethean run dev` → open `http://localhost:5200/` → left nav **Command Center**. Requires at least one executed workflow in the DB to populate the timeline and fleet list. |
 
 ### 1.2 `screenshots/templates.jpg` — Template Library
 
@@ -33,69 +33,72 @@ These three were captured while the UI was first built and are reused unchanged 
 | Caption | Six pre-configured workflow blueprints across Data Engineering, Legal & Compliance, Engineering, Sales, Security, and Customer Success, each deployable in one click. |
 | Surface | Template Library (pre-pipeline, user entry point) |
 | Evidence value | Shows breadth of supported domains and satisfies the rubric's request for concrete target-user scenarios. Also provides the CRM Lead Qualification tile used as the primary evaluation scenario (see `phase-2/08-interaction-trace.md`). |
-| Reproduction | `pnpm dev` → left nav **Template Library**. Templates are seeded from `artifacts/api-server/src/db/seed/templates.ts`. |
+| Reproduction | Start both dev servers → left nav **Template Library**. Templates are seeded from `artifacts/api-server/src/db/seed/templates.ts`. |
 
-### 1.3 `screenshots/wizard.jpg` — Prometheus Intake (Agent 1 entry)
+### 1.3 `screenshots/wizard.jpg` — Prometheus Intake (opening turn)
 
 | Field | Value |
 | --- | --- |
-| Caption | Opening turn of the Decomposition agent's conversational intake (step 0/8), prompting the user for the workflow name. |
-| Surface | New Workflow wizard — Agent 1 (Decomposition) |
-| Evidence value | Demonstrates the human-authored-input → AI-agent handoff boundary. The `0 / 8 complete` progress indicator documents the fixed-structure intake that feeds downstream agents. |
-| Reproduction | `pnpm dev` → left nav **+ New Workflow** → the first assistant turn appears immediately; screenshot before typing. |
+| Caption | Opening turn of the Prometheus Intake conversation, prompting the user for the workflow name. |
+| Surface | New Workflow wizard — intake step 0/2 |
+| Evidence value | Demonstrates the human-authored-input → AI-agent handoff boundary. The progress indicator documents the fixed-structure intake that feeds downstream agents. |
+| Reproduction | Start both dev servers → left nav **+ New Workflow** → the first assistant turn appears immediately; screenshot before typing. |
 
 ---
 
-## 2. Phase 3 captures required (TO DO)
+## 2. Phase 3 captures (new for final submission)
 
-Five new screenshots are needed to satisfy the rubric's "screenshots of key pipeline states" requirement (§4) and to reach the 4–8 captioned-screenshots target in §8. Each entry below is a capture spec — treat it as an acceptance test for the screenshot, not a wish list.
+Five new screenshots document the full pipeline lifecycle for the CRM Lead Qualification evaluation scenario, in the order a reviewer would encounter them. All captured on April 24, 2026 on a local dev environment (`http://localhost:5200/`) with the CRM Lead Qualification template.
 
-> **Capture environment for all items below:** local dev (`pnpm dev`), Chrome at 1440×900 viewport, DB seeded with the CRM Lead Qualification template, browser zoom 100%. Save as PNG into this folder.
-
-### 2.1 `phase-3/screenshots/04_approval_gate.png` — Human approval gate between agents
+### 2.1 `phase-3/screenshots/04_intake_review_gate.png` — Prometheus Intake review
 
 | Field | Value |
 | --- | --- |
-| Caption | Approval panel between Agent 2 (System Selection) and Agent 3 (Orchestration) showing the reviewer's Approve / Edit / Reject options with the feedback text field expanded. |
-| Surface | Pipeline run view, mid-pipeline |
-| Evidence value | Directly evidences the "human-in-the-loop gate" governance control claimed in `phase-2/06-risk-governance-plan.md`. This is the single most important new screenshot — without it, the HITL claim is unverified. |
-| Reproduction | Run a CRM Lead Qualification pipeline → wait for Agent 2 to complete → the approval panel appears before Agent 3 starts → click the **Reject with feedback** toggle to expand the textarea → capture. |
+| Caption | Pre-pipeline intake review (Step 2/2) showing Prometheus' auto-generated Domain classification, compliance-framework mapping (GDPR, CCPA, SOC 2, ISO/IEC 27001, NIST AI RMF 1.0, NIST CSF 2.0), and concrete guardrails, each with Accept / Edit controls for human review before Launch. |
+| Surface | New Workflow wizard — intake step 2/2 |
+| Evidence value | First human-in-the-loop checkpoint. Evidences the governance-by-design claim in `phase-2/06-risk-governance-plan.md`: compliance frameworks and guardrails are surfaced for human approval *before* the agent pipeline begins, not retrofitted afterward. |
+| Reproduction | Start both dev servers → **+ New Workflow** → name the workflow "CRM Lead Qualification" → paste the CRM evaluation description → wait for Prometheus to emit the three review panels → capture before clicking Launch. |
+| Captured on | April 24, 2026 |
 
-### 2.2 `phase-3/screenshots/05_agent_output_detail.png` — Structured agent output viewer
-
-| Field | Value |
-| --- | --- |
-| Caption | Agent 2 (System Selection) output panel showing per-node L0–L5 tags with justifications, expanded for one node to reveal the selection rationale and tool choice. |
-| Surface | Pipeline run view → Agent 2 output tab |
-| Evidence value | Proves Agent 2 emits human-readable L0–L5 classifications with justifications — the core claim of the system spectrum rubric. Supports rubric §4 (interaction traces) and §6 (design decisions are inspectable). |
-| Reproduction | Same CRM pipeline → after Agent 2 completes, open the agent output panel → click one node row to expand its justification → capture. |
-
-### 2.3 `phase-3/screenshots/06_database_state.png` — DB-centric state (Drizzle Studio)
+### 2.2 `phase-3/screenshots/05_agent_output_detail.png` — Decomposition gate with task graph
 
 | Field | Value |
 | --- | --- |
-| Caption | Drizzle Studio view of the `workflow_pipeline_runs` table with JSONB columns for each agent's output, showing progressive enrichment across a single run. |
-| Surface | Drizzle Studio (out-of-app, but part of the build) |
-| Evidence value | Substantiates the "database as single source of truth" architecture claim in `phase-2/04-tools-memory-data-design.md`. Distinguishes our design from in-memory / session-scoped agent chains. |
-| Reproduction | `pnpm drizzle-kit studio` → open `http://local.drizzle.studio` → table **workflow_pipeline_runs** → filter to the most recent run → capture the row expanded to show `decomposition_output`, `system_selection_output`, `orchestration_output`, and `governance_output` JSONB cells. |
+| Caption | Post-Decomposition human gate showing the 11-node task graph emitted by Agent 1 (Receive New Lead → Collect Lead Data → Validate Lead → … → Log Audit Event), with the "Review the decompose analysis" banner and Regenerate / Edit & Approve / APPROVE controls. |
+| Surface | Pipeline run view — post-Agent 1 approval gate |
+| Evidence value | Proves Agent 1 emits a structured, inspectable task decomposition (not free-form text), and that the reviewer can regenerate, edit, or approve before Agent 2 runs. Supports rubric §4 (interaction traces) and §6 (design decisions are inspectable). |
+| Reproduction | From the intake review, accept all three panels → click Launch → wait for Decomposition to complete → capture the graph view with the "Review the decompose analysis" banner visible. |
+| Captured on | April 24, 2026 |
 
-### 2.4 `phase-3/screenshots/07_full_pipeline_completion.png` — End-to-end pipeline success
-
-| Field | Value |
-| --- | --- |
-| Caption | Completion view after all four agents have run and been approved, showing the final workflow graph with per-node autonomy tags and governance annotations. |
-| Surface | Pipeline run view → final state |
-| Evidence value | Single frame that demonstrates the full four-agent pipeline ran end-to-end for the primary evaluation scenario. Serves as the headline image in the final report. |
-| Reproduction | Run the CRM pipeline through all four agent approval gates to completion → capture the final graph view with the "Pipeline complete" state visible. |
-
-### 2.5 `phase-3/screenshots/08_retry_with_feedback.png` — Feedback-as-retry flow
+### 2.3 `phase-3/screenshots/06_approval_gate_inter_agent.png` — System Selection gate with L0–L5 override
 
 | Field | Value |
 | --- | --- |
-| Caption | Agent 3 re-running after rejection, with the original output, the reviewer's feedback text, and the regenerated output shown side-by-side. |
-| Surface | Pipeline run view → Agent 3 output tab, post-rejection retry |
-| Evidence value | Evidences the "feedback-as-retry" mechanism from `phase-2/03-coordination-logic.md`. Also serves as one of the two required documented failure / boundary cases (rubric §6) if the first Agent 3 attempt had a genuine deficiency. |
-| Reproduction | During a CRM pipeline run, at the Agent 3 approval gate click **Reject with feedback** → enter a concrete correction (e.g. "Add a Slack notification after CRM upsert") → submit → wait for Agent 3 to regenerate → capture with both outputs visible in the diff view. |
+| Caption | Post-System-Selection human gate showing per-node L0–L5 autonomy classifications (L0 Deterministic for most nodes, L3 Single LLM for "Prepare Sales Handoff") with editable dropdowns under the "Adjust AI-assigned system levels before approving" panel. |
+| Surface | Pipeline run view — post-Agent 2 approval gate |
+| Evidence value | **Most distinctive screenshot in the set.** Directly visualizes the L0–L5 autonomy spectrum from `phase-2/02-role-definitions.md` and the reviewer's per-node override capability — evidence that the system-selection decision is both AI-generated and human-correctable at fine granularity, not an opaque batch approval. |
+| Reproduction | Continue from the Decompose gate → Edit & Approve → wait for System Selection → capture the L0–L5 Classification Override panel with the "Review the select analysis" banner and the Prepare Sales Handoff dropdown set to L3. |
+| Captured on | April 24, 2026 |
+
+### 2.4 `phase-3/screenshots/07_govern_gate.png` — Governance gate before Deploy
+
+| Field | Value |
+| --- | --- |
+| Caption | Post-Governance human gate showing the final enriched graph (including the Governance Checkpoint and Human Review Gate nodes added by Agent 4) with the "Review the govern analysis" banner and the green **DEPLOY** action enabled. |
+| Surface | Pipeline run view — post-Agent 4 approval gate |
+| Evidence value | Evidences the governance-agent contribution in `phase-2/04-tools-memory-data-design.md` — Agent 4 injects compliance-specific nodes (checkpoints, human-review gates) into the workflow graph, which the reviewer must approve before deployment. This is the last HITL gate before production. |
+| Reproduction | Continue from the Select gate through Orchestrate → wait for Governance to complete → capture the graph view with the orange Governance Checkpoint and Human Review Gate nodes visible and the DEPLOY button active. |
+| Captured on | April 24, 2026 |
+
+### 2.5 `phase-3/screenshots/08_deployed_gate.png` — End-to-end pipeline success
+
+| Field | Value |
+| --- | --- |
+| Caption | Post-deployment state with all six pipeline stages (Intake, Decompose, Select, Orchestrate, Govern, Deployed) complete and the DEPLOYED badge active, showing the final governed workflow graph ready for execution. |
+| Surface | Pipeline run view — final deployed state |
+| Evidence value | Single frame that demonstrates the full four-agent pipeline ran end-to-end for the primary CRM Lead Qualification evaluation scenario. Serves as the closing image in the final report narrative. |
+| Reproduction | From the Govern gate, click **DEPLOY** → wait for the deployed state to render → capture with all six progress pills green and the DEPLOYED badge visible top-right. |
+| Captured on | April 24, 2026 |
 
 ---
 
@@ -103,39 +106,36 @@ Five new screenshots are needed to satisfy the rubric's "screenshots of key pipe
 
 | Segment | Rule |
 | --- | --- |
-| Prefix | Two-digit zero-padded index matching the order screenshots appear in the final report. Existing 01–03 = dashboard / templates / wizard (Phase 2), 04–08 = Phase 3 captures. |
+| Prefix | Two-digit zero-padded index matching the order screenshots appear in the final report. 01–03 = Phase 2 (dashboard / templates / wizard), 04–08 = Phase 3. |
 | Name | Lower-snake-case, describes the surface not the workflow domain. |
 | Extension | `.png` for Phase 3 captures, existing `.jpg` files kept as-is to avoid breaking the Phase 2 video and bundle. |
 
-Example: `04_approval_gate.png`, not `CRM_approval_rejected_v2.png`.
-
 ---
 
-## 4. Capture checklist (for whoever takes the screenshots)
-
-Before saving each Phase 3 screenshot:
-
-- [ ] Browser viewport set to 1440×900 (Chrome DevTools → device toolbar → responsive → 1440×900).
-- [ ] No personally-identifying test data visible (use the seeded CRM template, not real leads).
-- [ ] Relevant panel / row is expanded so the evidence value is visible in the frame.
-- [ ] Dark-mode theme active (matches the existing three screenshots).
-- [ ] File saved into `phase-3/screenshots/` with the exact filename from §2 above.
-- [ ] This index updated with the capture date in a new **Captured on** row under the file's table.
-
----
-
-## 5. Cross-references
+## 4. Cross-references
 
 | Rubric item | Screenshots that satisfy it |
 | --- | --- |
-| §4 Evidence Package — "screenshots of key pipeline states" | 2.1, 2.2, 2.4, 2.5 |
-| §4 Evidence Package — interaction traces supporting material | 2.3 (DB state), 2.5 (retry transcript) |
-| §6 Failure Analysis — at least one concrete failure / retry case | 2.5 |
+| §4 Evidence Package — screenshots of key pipeline states | 2.1, 2.2, 2.3, 2.4, 2.5 |
+| §4 Evidence Package — interaction traces supporting material | 2.2 (agent output), 2.3 (L0–L5 override) |
+| §6 Failure Analysis — human correction surfaces | 2.3 (per-node override), 2.4 (governance review) |
 | §8 Portfolio-Ready Package — 4–8 captioned screenshots | All 8 entries above |
-| `phase-2/06-risk-governance-plan.md` — HITL gate claim | 2.1 |
-| `phase-2/04-tools-memory-data-design.md` — DB-centric state claim | 2.3 |
-| `phase-2/03-coordination-logic.md` — feedback-as-retry claim | 2.5 |
+| `phase-2/02-role-definitions.md` — L0–L5 spectrum | 2.3 |
+| `phase-2/03-coordination-logic.md` — approval-gate sequencing | 2.2, 2.3, 2.4 |
+| `phase-2/04-tools-memory-data-design.md` — governance agent output | 2.4 |
+| `phase-2/06-risk-governance-plan.md` — HITL gate claim | 2.1, 2.2, 2.3, 2.4 |
 
 ---
 
-_Last updated: April 21, 2026. Edit this file whenever a new screenshot is added or an existing one is replaced._
+## 5. Capture environment (for reproduction)
+
+- Browser: Chrome at 1440×900 viewport, zoom 100%, dark mode
+- Frontend: `pnpm --filter @workspace/promethean run dev` → `http://localhost:5200/`
+- Backend: `pnpm --filter @workspace/api-server run dev` → `http://localhost:8080/`
+- Database: Postgres with the CRM Lead Qualification template seeded
+- OpenAI: `gpt-5.4-mini-2026-03-17` via `AI_INTEGRATIONS_OPENAI_API_KEY`
+- Full-page captures taken via Chrome DevTools → Command Menu → "Capture full size screenshot"
+
+---
+
+_Last updated: April 24, 2026. Edit this file whenever a new screenshot is added or an existing one is replaced._
