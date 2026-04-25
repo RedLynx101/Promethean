@@ -38,14 +38,14 @@
 
 ## Hours invested
 
-- **Phase 2: ~18 hours**
-  - Tech-stack evaluation and tooling review: ~4h
-  - L0–L5 rubric / role-definition review and QA against real prompts: ~6h
-  - End-to-end QA of teammate agent builds during shipping: ~5h
-  - Evaluation plan input + documentation consistency pass: ~3h
-- **Phase 3: ~20 hours**
-  - Evidence capture (screenshots + index + local stack setup/debugging): ~8h
-  - Baseline comparison (experiment design, script authoring, 9 runs, CSV, analysis): ~7h
+- **Phase 2: ~10 hours**
+  - Tech-stack evaluation and tooling review: ~3h
+  - L0–L5 rubric / role-definition review and QA against real prompts: ~3h
+  - End-to-end QA of teammate agent builds during shipping: ~2h
+  - Evaluation plan input + documentation consistency pass: ~2h
+- **Phase 3: ~12 hours**
+  - Evidence capture (screenshots + index + local stack setup/debugging): ~2h
+  - Baseline comparison (experiment design, script authoring, 9 runs, CSV, analysis): ~4h
   - Model-version fix + AI_USAGE refresh + other doc polish: ~3h
-  - Review, git workflow, coordination with teammates: ~2h
-- **Total across both phases: ~38 hours**
+  - Review, git workflow, coordination with teammates: ~3h
+- **Total across both phases: ~22 hours**
