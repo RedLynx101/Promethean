@@ -19,6 +19,12 @@ export const workflowsTable = pgTable("workflows", {
   systemTypeSummary: jsonb("system_type_summary").notNull().default({}),
   triggerType: text("trigger_type"),
   workflowBrief: text("workflow_brief"),
+  // Per-phase rejection counter — incremented on each /pipeline/:id/reject call,
+  // reset to 0 whenever an approval advances the workflow to a new phase.
+  rejectionCount: integer("rejection_count").notNull().default(0),
+  // Hard cap on rejections per phase. Default 3 keeps the human-in-the-loop
+  // governance gate honest while still allowing iterative refinement.
+  maxRejections: integer("max_rejections").notNull().default(3),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

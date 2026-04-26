@@ -166,6 +166,8 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
       systemTypeSummary: summary as unknown,
       estimatedCostPerRun: String(agentResult.estimatedCostPerRun ?? 0),
       estimatedLatencyMs: agentResult.estimatedLatencyMs ?? null,
+      // Phase advanced — reset the rejection counter for the next phase's gate.
+      rejectionCount: 0,
     }).where(eq(workflowsTable.id, workflowId));
 
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message };
@@ -186,6 +188,8 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
       edges: currentEdges as unknown,
       phase: "orchestrate",
       status: "awaiting_approval",
+      // Phase advanced — reset the rejection counter for the next phase's gate.
+      rejectionCount: 0,
     }).where(eq(workflowsTable.id, workflowId));
 
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message };
@@ -207,6 +211,8 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
       governanceConfig: agentResult.governanceConfig as unknown,
       phase: "govern",
       status: "awaiting_approval",
+      // Phase advanced — reset the rejection counter for the next phase's gate.
+      rejectionCount: 0,
     }).where(eq(workflowsTable.id, workflowId));
 
     result = {
@@ -220,6 +226,8 @@ router.post("/pipeline/:workflowId/approve", async (req, res): Promise<void> => 
     await db.update(workflowsTable).set({
       phase: "deployed",
       status: "active",
+      // Phase advanced — reset the rejection counter for the next phase's gate.
+      rejectionCount: 0,
     }).where(eq(workflowsTable.id, workflowId));
 
     await db.insert(workflowVersionsTable).values({
@@ -268,11 +276,43 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
     return;
   }
 
+  // Enforce the per-phase rejection cap. This closes the unbounded-rejection
+  // failure mode flagged in Phase 2 feedback: humans can't trap the workflow
+  // in an infinite reject/regenerate loop. After max rejections, the operator
+  // must either escalate or reset the phase.
+  if (workflow.rejectionCount >= workflow.maxRejections) {
+    req.log.warn(
+      { workflowId, phase, rejectionCount: workflow.rejectionCount, maxRejections: workflow.maxRejections },
+      "Rejection cap reached for current phase",
+    );
+    res.status(409).json({
+      error:
+        `Rejection cap reached for phase "${workflow.phase}" ` +
+        `(${workflow.rejectionCount}/${workflow.maxRejections}). ` +
+        `Escalate to a workflow owner or reset the phase before further regeneration.`,
+      rejectionCount: workflow.rejectionCount,
+      maxRejections: workflow.maxRejections,
+    });
+    return;
+  }
+
+  // Also guard against phase mismatch — same defensive check as /approve.
+  if (workflow.phase !== phase) {
+    res.status(409).json({
+      error: `Phase mismatch: workflow is in phase "${workflow.phase}" but request targets "${phase}". Refresh and try again.`,
+    });
+    return;
+  }
+
   const description = workflow.workflowBrief ?? "workflow";
   const currentNodes = workflow.nodes as PrometheanNode[];
   const currentEdges = workflow.edges as PrometheanEdge[];
+  const nextRejectionCount = workflow.rejectionCount + 1;
 
-  req.log.info({ workflowId, phase, feedback }, "Regenerating pipeline phase");
+  req.log.info(
+    { workflowId, phase, feedback, rejectionCount: nextRejectionCount, maxRejections: workflow.maxRejections },
+    "Regenerating pipeline phase",
+  );
 
   let result: Record<string, unknown>;
 
@@ -282,6 +322,7 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
       nodes: agentResult.nodes as unknown,
       edges: agentResult.edges as unknown,
       status: "awaiting_approval",
+      rejectionCount: nextRejectionCount,
     }).where(eq(workflowsTable.id, workflowId));
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message: agentResult.summary };
 
@@ -291,6 +332,7 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
       nodes: agentResult.nodes as unknown,
       edges: agentResult.edges as unknown,
       status: "awaiting_approval",
+      rejectionCount: nextRejectionCount,
     }).where(eq(workflowsTable.id, workflowId));
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message: agentResult.summary };
 
@@ -300,6 +342,7 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
       nodes: agentResult.nodes as unknown,
       edges: agentResult.edges as unknown,
       status: "awaiting_approval",
+      rejectionCount: nextRejectionCount,
     }).where(eq(workflowsTable.id, workflowId));
     result = { nodes: agentResult.nodes, edges: agentResult.edges, message: agentResult.summary };
 
@@ -310,6 +353,7 @@ router.post("/pipeline/:workflowId/reject", async (req, res): Promise<void> => {
       edges: agentResult.edges as unknown,
       governanceConfig: agentResult.governanceConfig as unknown,
       status: "awaiting_approval",
+      rejectionCount: nextRejectionCount,
     }).where(eq(workflowsTable.id, workflowId));
     result = {
       nodes: agentResult.nodes,
