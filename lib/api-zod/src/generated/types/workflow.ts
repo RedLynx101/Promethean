@@ -33,6 +33,8 @@ export interface Workflow {
   triggerType?: string | null;
   /** @nullable */
   workflowBrief?: string | null;
+  rejectionCount: number;
+  maxRejections: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -122,6 +122,25 @@ This document identifies concrete failure modes, misuse risks, and trust concern
 | Human review of governance | Human reviewer can ensure consistency before deployment | Yes |
 | Domain-based defaults | Governance thresholds can be calibrated by domain category | Partial |
 
+### 2.7 Unbounded Reject/Regenerate Loop
+
+**What it is:** A reviewer (or an automated client) issues `POST /pipeline/:id/reject` indefinitely, forcing the same agent to regenerate over and over. Each rejection consumes LLM tokens, increases user-visible latency, and — in degenerate cases — can keep a workflow from ever advancing past a single phase.
+
+**Why it matters for Promethean:** The rejection path is supposed to be a safety mechanism, not an attack surface. Without a budget, a noisy reviewer or a buggy automation can burn through the workflow's cost ceiling, drown the audit log in near-duplicate revisions, and effectively livelock the human-in-the-loop pipeline. This is the exact failure mode flagged in Phase 2 feedback ("the rejection mechanism has no hard limit").
+
+**Likelihood:** Medium — the original implementation accepted unlimited rejections, so even non-malicious users could trigger this by repeatedly rejecting until the agent produced something they liked.
+
+**Impact:** Medium-High — runaway cost on the LLM bill, broken latency SLAs, and a stalled phase that blocks downstream agents.
+
+**Mitigations:**
+| Mitigation | How It Works | Implemented? |
+|-----------|-------------|:---:|
+| Per-phase rejection counter | `workflows.rejection_count` is incremented on each successful regeneration and reset to 0 every time an approval advances the workflow to a new phase | Yes (Phase 3) |
+| Hard cap (default 3) | `workflows.max_rejections` is checked at the top of `POST /pipeline/:id/reject`; once `rejection_count >= max_rejections` the endpoint returns HTTP 409 with a `{rejectionCount, maxRejections}` payload instead of running the agent | Yes (Phase 3) |
+| Cap visible in UI | The Regenerate button on the editor shows "X / N" remaining and is disabled when the cap is hit; a banner instructs the operator to escalate or reset the phase | Yes (Phase 3) |
+| Configurable budget | `max_rejections` is a per-workflow column (default 3) so high-risk domains can tighten and low-risk experimentation can loosen the budget without code changes | Yes (Phase 3) |
+| Audit trail | All rejection attempts, including the cap-exceeded 409s, are logged via the request logger so post-incident review can identify operators stuck in reject loops | Yes |
+
 ---
 
 ## 3. Misuse Risks

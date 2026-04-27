@@ -226,6 +226,12 @@ paths:
       operationId: rejectPhase
       tags: [pipeline]
       summary: Reject current phase and request regeneration
+      description: |
+        Rejects the latest output for the workflow's current phase and re-runs the
+        responsible agent with the provided feedback. Each successful regeneration
+        increments `rejectionCount`. Once `rejectionCount` reaches `maxRejections`
+        (default 3) the endpoint returns 409 and the human must either escalate or
+        reset the phase before further regeneration is allowed.
       parameters:
         - name: workflowId
           in: path
@@ -245,6 +251,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PipelinePhaseResult"
+        "409":
+          description: |
+            Rejection cap exceeded for the current phase. The workflow must be
+            escalated or the phase reset before further rejections are accepted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /pipeline/{workflowId}/status:
     get:
@@ -828,11 +842,17 @@ components:
           type: ["string", "null"]
         workflowBrief:
           type: ["string", "null"]
+        rejectionCount:
+          type: integer
+          description: Number of rejections recorded against the current phase. Resets to 0 each time the workflow advances to a new phase.
+        maxRejections:
+          type: integer
+          description: Hard cap on rejections allowed per phase before the workflow must be aborted or reset. Default is 3.
         createdAt:
           type: string
         updatedAt:
           type: string
-      required: [id, name, status, phase, version, createdAt, updatedAt, nodes, edges]
+      required: [id, name, status, phase, version, createdAt, updatedAt, nodes, edges, rejectionCount, maxRejections]
 
     WorkflowVersion:
       type: object

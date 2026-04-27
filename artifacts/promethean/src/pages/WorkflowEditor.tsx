@@ -294,13 +294,17 @@ export default function WorkflowEditor() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["pipeline-status", workflowId] }),
   });
 
+  const [rejectError, setRejectError] = useState<string | null>(null);
+
   const rejectPhase = useMutation({
     mutationFn: (feedback: string) =>
       apiFetch(`/pipeline/${workflowId}/reject`, {
         method: "POST",
         body: JSON.stringify({ phase: currentPhase, feedback: feedback || undefined }),
       }),
+    onMutate: () => setRejectError(null),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["pipeline-status", workflowId] }),
+    onError: (err: Error) => setRejectError(err.message),
   });
 
   const [rejectReason, setRejectReason] = useState("");
@@ -373,6 +377,12 @@ export default function WorkflowEditor() {
     status?.status === "awaiting_approval";
   const isRunning = !isPending && !["wizard", "deployed"].includes(currentPhase);
 
+  // Per-phase rejection budget (server-enforced cap, surfaced in UI)
+  const rejectionCount = status?.workflow?.rejectionCount ?? 0;
+  const maxRejections = status?.workflow?.maxRejections ?? 3;
+  const remainingRejections = Math.max(0, maxRejections - rejectionCount);
+  const rejectionCapHit = rejectionCount >= maxRejections;
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center" style={{ background: "#0a0e14" }}>
@@ -429,10 +439,18 @@ export default function WorkflowEditor() {
         <div className="flex items-center gap-2">
           {isPending && !showReject && (
             <>
-              {/* Regenerate (reject with feedback) */}
+              {/* Regenerate (reject with feedback). Disabled when the per-phase
+                  rejection cap is reached — the operator must escalate or
+                  reset the phase before further regeneration is allowed. */}
               <button
                 onClick={() => setShowReject(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-80"
+                disabled={rejectionCapHit}
+                title={
+                  rejectionCapHit
+                    ? `Rejection cap reached (${rejectionCount}/${maxRejections}). Escalate or reset the phase to continue.`
+                    : `${remainingRejections} of ${maxRejections} rejection${maxRejections === 1 ? "" : "s"} remaining`
+                }
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   background: "rgba(244,67,54,0.1)",
                   border: "1px solid rgba(244,67,54,0.3)",
@@ -440,7 +458,7 @@ export default function WorkflowEditor() {
                 }}
               >
                 <X className="w-3.5 h-3.5" />
-                Regenerate
+                Regenerate ({remainingRejections}/{maxRejections})
               </button>
               {/* Governance config toggle (only for govern phase) */}
               {currentPhase === "govern" && (
@@ -540,41 +558,82 @@ export default function WorkflowEditor() {
       {/* Reject panel */}
       {showReject && (
         <div
-          className="flex items-center gap-3 px-6 py-3 border-b flex-shrink-0"
+          className="flex flex-col gap-2 px-6 py-3 border-b flex-shrink-0"
           style={{ background: "rgba(244,67,54,0.05)", borderColor: "rgba(244,67,54,0.2)" }}
         >
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: "#F44336" }} />
-          <input
-            type="text"
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="Reason for rejection (optional)..."
-            className="flex-1 px-3 py-1.5 rounded-lg text-sm outline-none"
-            style={{
-              background: "#0a0e14",
-              border: "1px solid rgba(244,67,54,0.3)",
-              color: "#e6edf3",
-              fontFamily: "Inter",
-            }}
-          />
-          <button
-            onClick={() => {
-              rejectPhase.mutate(rejectReason);
-              setShowReject(false);
-              setRejectReason("");
-            }}
-            className="px-3 py-1.5 rounded-lg text-xs transition-all"
-            style={{ background: "rgba(244,67,54,0.2)", border: "1px solid rgba(244,67,54,0.4)", color: "#F44336" }}
-          >
-            Confirm Reject
-          </button>
-          <button
-            onClick={() => setShowReject(false)}
-            className="px-3 py-1.5 rounded-lg text-xs"
-            style={{ color: "rgba(230,237,243,0.4)" }}
-          >
-            Cancel
-          </button>
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: "#F44336" }} />
+            <input
+              type="text"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Reason for rejection (optional)..."
+              className="flex-1 px-3 py-1.5 rounded-lg text-sm outline-none"
+              style={{
+                background: "#0a0e14",
+                border: "1px solid rgba(244,67,54,0.3)",
+                color: "#e6edf3",
+                fontFamily: "Inter",
+              }}
+            />
+            <span
+              className="px-2 py-1 rounded text-[10px] font-jetbrains uppercase tracking-wider"
+              style={{
+                background: rejectionCapHit ? "rgba(244,67,54,0.15)" : "rgba(244,67,54,0.07)",
+                color: rejectionCapHit ? "#ff6f60" : "rgba(244,67,54,0.85)",
+                border: "1px solid rgba(244,67,54,0.25)",
+              }}
+              title="Per-phase rejection budget. Resets when the phase advances."
+            >
+              {remainingRejections}/{maxRejections} left
+            </span>
+            <button
+              onClick={() => {
+                rejectPhase.mutate(rejectReason);
+                setShowReject(false);
+                setRejectReason("");
+              }}
+              disabled={rejectionCapHit}
+              className="px-3 py-1.5 rounded-lg text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: "rgba(244,67,54,0.2)", border: "1px solid rgba(244,67,54,0.4)", color: "#F44336" }}
+            >
+              Confirm Reject
+            </button>
+            <button
+              onClick={() => setShowReject(false)}
+              className="px-3 py-1.5 rounded-lg text-xs"
+              style={{ color: "rgba(230,237,243,0.4)" }}
+            >
+              Cancel
+            </button>
+          </div>
+          {rejectionCapHit && (
+            <div
+              className="px-3 py-2 rounded text-xs"
+              style={{
+                background: "rgba(244,67,54,0.12)",
+                color: "#ff8a80",
+                border: "1px solid rgba(244,67,54,0.3)",
+                fontFamily: "Inter",
+              }}
+            >
+              Rejection cap reached for the {currentPhase} phase ({rejectionCount}/{maxRejections}).
+              Escalate to a workflow owner or reset the phase before requesting another regeneration.
+            </div>
+          )}
+          {rejectError && !rejectionCapHit && (
+            <div
+              className="px-3 py-2 rounded text-xs"
+              style={{
+                background: "rgba(244,67,54,0.12)",
+                color: "#ff8a80",
+                border: "1px solid rgba(244,67,54,0.3)",
+                fontFamily: "Inter",
+              }}
+            >
+              {rejectError}
+            </div>
+          )}
         </div>
       )}
 

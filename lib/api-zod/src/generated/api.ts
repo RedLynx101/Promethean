@@ -78,6 +78,8 @@ export const ListWorkflowsResponseItem = zod.object({
   systemTypeSummary: zod.object({}).passthrough().optional(),
   triggerType: zod.string().nullish(),
   workflowBrief: zod.string().nullish(),
+  rejectionCount: zod.number(),
+  maxRejections: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -161,6 +163,8 @@ export const GetWorkflowResponse = zod.object({
   systemTypeSummary: zod.object({}).passthrough().optional(),
   triggerType: zod.string().nullish(),
   workflowBrief: zod.string().nullish(),
+  rejectionCount: zod.number(),
+  maxRejections: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -293,6 +297,8 @@ export const UpdateWorkflowResponse = zod.object({
   systemTypeSummary: zod.object({}).passthrough().optional(),
   triggerType: zod.string().nullish(),
   workflowBrief: zod.string().nullish(),
+  rejectionCount: zod.number(),
+  maxRejections: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
