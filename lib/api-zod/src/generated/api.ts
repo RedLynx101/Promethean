@@ -78,6 +78,8 @@ export const ListWorkflowsResponseItem = zod.object({
   systemTypeSummary: zod.object({}).passthrough().optional(),
   triggerType: zod.string().nullish(),
   workflowBrief: zod.string().nullish(),
+  rejectionCount: zod.number(),
+  maxRejections: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -161,6 +163,8 @@ export const GetWorkflowResponse = zod.object({
   systemTypeSummary: zod.object({}).passthrough().optional(),
   triggerType: zod.string().nullish(),
   workflowBrief: zod.string().nullish(),
+  rejectionCount: zod.number(),
+  maxRejections: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -293,6 +297,8 @@ export const UpdateWorkflowResponse = zod.object({
   systemTypeSummary: zod.object({}).passthrough().optional(),
   triggerType: zod.string().nullish(),
   workflowBrief: zod.string().nullish(),
+  rejectionCount: zod.number(),
+  maxRejections: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -327,8 +333,8 @@ export const ListWorkflowVersionsResponse = zod.array(
  * @summary Start the agent pipeline for a workflow
  */
 export const StartPipelineBody = zod.object({
-  workflowId: zod.string(),
-  description: zod.string(),
+  workflowId: zod.string().min(1),
+  description: zod.string().min(1),
   domain: zod.string().optional(),
   constraints: zod
     .object({

@@ -1,0 +1,1 @@
+Validate incoming CSV files: check that the file has the expected columns, verify data types match the schema, flag any null values in required fields, check that numeric values are within acceptable ranges, and generate a validation report listing all errors found.

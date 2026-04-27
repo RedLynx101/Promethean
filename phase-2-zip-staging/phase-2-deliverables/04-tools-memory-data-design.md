@@ -16,7 +16,7 @@ This document describes what information each agent can access, how the system s
 ### Shared Resources (All Agents)
 | Resource | Type | Access |
 |----------|------|--------|
-| OpenAI GPT-5.2 API | LLM | Read (generate completions) |
+| OpenAI GPT-5.4-mini API | LLM | Read (generate completions) |
 | System prompt | Configuration | Read-only (embedded per agent) |
 | Pino logger | Observability | Write (structured log entries) |
 
@@ -172,6 +172,39 @@ Pre-built workflow patterns.
 | `is_public` | BOOLEAN | Whether the template is publicly available |
 | `created_at` | TIMESTAMP WITH TZ | Creation timestamp |
 
+### 3.7 Retention and Rotation Policy
+
+The two highest-volume tables in the schema — `executions` and `execution_steps` — accumulate one row per workflow run and per executed step respectively. A single deployed workflow firing once a minute writes ~43,000 execution rows per month and an order of magnitude more step rows. Without an explicit retention policy these tables grow without bound, degrading query latency on the operator dashboards (which read from them for success-rate and drift charts) and bloating backup storage. This section, added in response to Phase 2 feedback, defines the policy.
+
+**Retention windows (default tiers):**
+
+| Table | Hot retention | Warm retention | Cold archive | Hard delete |
+|-------|---------------|---------------|--------------|-------------|
+| `executions` (status = `completed`) | 30 days | 90 days (compressed JSONB columns: `result`, `trigger_payload`) | S3 / object storage as Parquet for 1 year | After 1 year |
+| `executions` (status = `failed`) | 90 days | 180 days | Parquet for 2 years | After 2 years |
+| `execution_steps` linked to a completed execution | 30 days | 90 days (`input`, `output`, `llm_calls`, `tool_calls` truncated to 4 KB summaries beyond hot window) | Parquet for 1 year | After 1 year |
+| `execution_steps` linked to a failed execution | 90 days | 180 days | Parquet for 2 years | After 2 years |
+| `alerts` (status = `resolved`) | 90 days | — | — | After 90 days |
+| `alerts` (status = `active` or `acknowledged`) | Indefinite (until resolved) | — | — | Never auto-deleted |
+| `workflow_versions` | Indefinite (immutable audit record) | — | — | Never |
+| `workflows`, `templates` | Indefinite | — | — | Never |
+
+The asymmetric retention for failed runs is intentional: failures are the primary input to drift analysis and post-incident review, so they outlive successful runs by 3×.
+
+**Rotation mechanism:**
+
+1. **Daily cron** (`scripts/retention-rotate.ts`, runs at 02:00 UTC) walks the `executions` table partitioned by `started_at` (monthly partitions) and:
+   - Compresses warm-tier rows by replacing large JSONB columns with truncated summaries.
+   - Exports cold-tier rows to Parquet on object storage, indexed by `workflow_id` + `started_at`.
+   - Cascades deletions to `execution_steps` via the existing `execution_id` FK with `ON DELETE CASCADE`.
+2. **Monthly cron** drops any partition whose entire date range is older than the hard-delete window, so deletes are O(1) DROP PARTITION rather than per-row DELETEs.
+3. **Per-workflow override**: a workflow can declare `retentionOverrideDays` in its `governance_config` to extend hot retention (e.g., regulated medical workflows that need 7 years of audit history). The cron honors the override and routes long-retention rows directly to the cold archive.
+4. **Proof-of-deletion log**: every hard delete produces a row in an append-only `retention_audit` table (`workflow_id`, `table_name`, `row_count`, `oldest_started_at`, `newest_started_at`, `deleted_at`, `cron_run_id`) so compliance can prove a row existed and was removed on schedule.
+
+**Why partitioning over plain DELETEs:** at our projected volumes a row-level DELETE on `execution_steps` running once a day would hold long-lived locks and rewrite indexes; PostgreSQL declarative partitioning by `started_at` lets the cron run sub-second DROP PARTITION statements with no impact on live writes.
+
+**Pruning of cap-exceeded rejections (related):** the rejection-cap mechanism added in Phase 3 stores nothing new in `executions` or `execution_steps` — rejections happen during the build phase, before any execution runs — so the policy above is unaffected by the cap. The pino request log is the audit trail for rejection attempts and follows the existing log-shipping retention (30 days hot, 1 year cold).
+
 ### Entity-Relationship Diagram
 
 ```
@@ -222,7 +255,7 @@ Pre-built workflow patterns.
 ### Configuration
 | Parameter | Value | Rationale |
 |-----------|-------|-----------|
-| Model | `gpt-5.2` | Best balance of capability, cost, and speed for structured output |
+| Model | `gpt-5.4-mini-2026-03-17` | Best balance of capability, cost, and speed for structured output |
 | `max_completion_tokens` | 8192 | Sufficient for complex workflow JSON output |
 | `response_format` | `{ type: "json_object" }` | Forces valid JSON response, prevents prose leakage |
 | Temperature | Default (1.0) | Allows creative decomposition while JSON mode constrains format |
@@ -356,7 +389,7 @@ Zod provides runtime type checking that complements TypeScript's compile-time ch
 
 | Decision | Choice | Why |
 |----------|--------|-----|
-| Single LLM model for all agents | GPT-5.2 | Simplifies integration; function calling support; good balance of cost and capability |
+| Single LLM model for all agents | GPT-5.4-mini | Simplifies integration; function calling support; good balance of cost and capability |
 | JSON structured output mode | `response_format: json_object` | Eliminates parsing errors; ensures valid output |
 | PostgreSQL for pipeline state | Database-centric | Durable, auditable, queryable, survives restarts |
 | JSONB for workflow definitions | Flexible schema | Agent outputs evolve without migrations |

@@ -1,0 +1,1 @@
+When a new lead comes in through the website form, validate the email format and check for duplicates in the CRM. Score the lead based on company size, industry, and engagement history. If the score is above 80, route to a sales rep with a personalized summary. If below 40, add to the nurture campaign. For scores in between, flag for manual review by the sales team.

@@ -186,12 +186,16 @@ If an agent call fails (e.g., LLM returns invalid JSON, network error, empty res
 - The human can retry the same operation
 - Express error middleware handles unhandled exceptions
 
-### Rejection as Retry
-The rejection mechanism serves as the primary retry path:
+### Rejection as Retry (Bounded)
+The rejection mechanism serves as the primary retry path, but is bounded to prevent indefinite reject/regenerate loops:
 - Human provides feedback explaining what was wrong
 - The same agent is re-called with the feedback appended to the prompt
 - The agent's system prompt includes instructions to improve based on feedback
-- There is no hard limit on rejections (the human can reject and re-generate as many times as needed)
+- A per-phase rejection counter (`workflows.rejection_count`) is incremented on every successful regeneration
+- The counter is reset to 0 each time an approval advances the workflow to a new phase, so the budget refreshes per gate
+- A hard cap of 3 rejections per phase (`workflows.max_rejections`, configurable per workflow) is enforced server-side in `POST /pipeline/:id/reject` — once `rejection_count >= max_rejections` the endpoint returns HTTP 409 with the remaining-budget payload
+- The UI surfaces "X of N rejections remaining" on the Regenerate button and disables the button when the cap is reached, with a banner instructing the operator to escalate or reset the phase before continuing
+- This closes the unbounded-rejection failure mode flagged in Phase 2 feedback while still permitting iterative refinement up to the budget
 
 ### LLM Response Validation
 - All agent responses are parsed with `JSON.parse()` — invalid JSON throws an error
@@ -218,6 +222,9 @@ const defaultConfig: GovernanceConfig = {
 
 ## 7. Sequence Diagram — Full Pipeline Execution
 
+> **Model reference:** `gpt-5.4` in the sequence diagrams below is an abbreviation for `gpt-5.4-mini-2026-03-17`, the exact OpenAI model identifier used by all four agents.
+
+
 ```
 User        Frontend       API Server     Decomp.Agent   Select.Agent   Orch.Agent   Gov.Agent    Database
  │              │               │               │              │             │            │           │
@@ -231,7 +238,7 @@ User        Frontend       API Server     Decomp.Agent   Select.Agent   Orch.Age
  │              │               │               │              │             │            │           │
  │              │               │ runDecomp()   │              │             │            │           │
  │              │               │──────────────▶│              │             │            │           │
- │              │               │               │ GPT-5.2 call │             │            │           │
+ │              │               │               │ gpt-5.4 call │             │            │           │
  │              │               │               │─────────┐    │             │            │           │
  │              │               │               │         │    │             │            │           │
  │              │               │               │◀────────┘    │             │            │           │
@@ -254,7 +261,7 @@ User        Frontend       API Server     Decomp.Agent   Select.Agent   Orch.Age
  │              │──────────────▶│               │              │             │            │           │
  │              │               │ runSelect()   │              │             │            │           │
  │              │               │──────────────────────────────▶│             │            │           │
- │              │               │               │              │ GPT-5.2     │            │           │
+ │              │               │               │              │ gpt-5.4     │            │           │
  │              │               │               │              │────────┐    │            │           │
  │              │               │               │              │        │    │            │           │
  │              │               │               │              │◀───────┘    │            │           │
@@ -272,7 +279,7 @@ User        Frontend       API Server     Decomp.Agent   Select.Agent   Orch.Age
  │              │──────────────▶│               │              │             │            │           │
  │              │               │ runOrchestration()            │             │            │           │
  │              │               │──────────────────────────────────────────▶│            │           │
- │              │               │               │              │             │ GPT-5.2   │           │
+ │              │               │               │              │             │ gpt-5.4   │           │
  │              │               │               │              │             │───────┐   │           │
  │              │               │               │              │             │       │   │           │
  │              │               │               │              │             │◀──────┘   │           │
@@ -289,7 +296,7 @@ User        Frontend       API Server     Decomp.Agent   Select.Agent   Orch.Age
  │              │──────────────▶│               │              │             │            │           │
  │              │               │ runGovernance()│              │             │            │           │
  │              │               │──────────────────────────────────────────────────────▶│           │
- │              │               │               │              │             │            │ GPT-5.2  │
+ │              │               │               │              │             │            │ gpt-5.4  │
  │              │               │               │              │             │            │──────┐   │
  │              │               │               │              │             │            │      │   │
  │              │               │               │              │             │            │◀─────┘   │
@@ -331,7 +338,7 @@ User        Frontend       API Server     Agent (same phase)   Database
  │              │               │ Re-run agent  │                  │
  │              │               │ with feedback │                  │
  │              │               │──────────────▶│                  │
- │              │               │               │ GPT-5.2 call     │
+ │              │               │               │ gpt-5.4 call     │
  │              │               │               │ (includes:       │
  │              │               │               │ "Previous result │
  │              │               │               │  was rejected.   │

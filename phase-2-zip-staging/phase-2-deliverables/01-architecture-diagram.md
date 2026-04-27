@@ -78,7 +78,7 @@
 │  (See Pipeline Detail Below)    │  │   PostgreSQL + Drizzle ORM                │
 │                                 │  │                                           │
 │  Each agent calls:              │  │   ┌──────────────┐  ┌─────────────┐       │
-│  • OpenAI GPT-5.2 API           │  │   │  workflows   │  │  executions │       │
+│  • OpenAI GPT-5.4-mini API      │  │   │  workflows   │  │  executions │       │
 │  • JSON structured output       │  │   │              │  │             │       │
 │  • Function calling mode        │  │   │ • id (UUID)  │  │ • id (UUID) │       │
 │                                 │  │   │ • name       │  │ • workflowId│       │
@@ -124,6 +124,9 @@
 
 ## 2. Four-Agent Pipeline — Detailed View
 
+> **Model reference:** `gpt-5.4-mini` in the ASCII diagrams below refers to `gpt-5.4-mini-2026-03-17`, the exact OpenAI model identifier used by all four agents in production code.
+
+
 ```
 ╔══════════════════════════════════════════════════════════════════════════════════╗
 ║                    PROMETHEAN 4-AGENT SEQUENTIAL PIPELINE                        ║
@@ -159,7 +162,7 @@
 │  │           │  │    │  │  cost/lat │  │    │  │  handling │  │    │  │  threshlds│  │
 │  └───────────┘  │    │  └───────────┘  │    │  └───────────┘  │    │  └───────────┘  │
 │                 │    │                 │    │                 │    │                 │
-│  Model: GPT-5.2 │    │  Model: GPT-5.2 │    │  Model: GPT-5.2 │    │  Model: GPT-5.2 │
+│  gpt-5.4-mini   │    │  gpt-5.4-mini   │    │  gpt-5.4-mini   │    │  gpt-5.4-mini   │
 │  JSON output    │    │  JSON output    │    │  JSON output    │    │  JSON output    │
 │  8192 max tkns  │    │  8192 max tkns  │    │  8192 max tkns  │    │  8192 max tkns  │
 └────────┬────────┘    └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
@@ -206,7 +209,7 @@
    │                        │                          │  ┌─────────────────┐  │
    │                        │                          │  │ Decomposition   │  │
    │                        │                          │──▶│ Agent          │  │
-   │                        │                          │  │ (GPT-5.2 call)  │  │
+   │                        │                          │  │ (gpt-5.4-mini)  │  │
    │                        │                          │  └────────┬────────┘  │
    │                        │                          │           │           │
    │                        │                          │  ◀────────┘           │
@@ -234,7 +237,7 @@
    │                        │                          │  ┌─────────────────┐  │
    │                        │                          │  │ System Selection│  │
    │                        │                          │──▶ Agent           │  │
-   │                        │                          │  │ (GPT-5.2 call)  │  │
+   │                        │                          │  │ (gpt-5.4-mini)  │  │
    │                        │                          │  └────────┬────────┘  │
    │                        │                          │           │           │
    │                        │                          │  {nodes[] w/ L0–L5,   │
@@ -325,7 +328,7 @@
 │  └── CORS middleware                                            │
 │                                                                 │
 │  AI / AGENTS                                                    │
-│  ├── OpenAI GPT-5.2 (all 4 agents)                              │
+│  ├── OpenAI GPT-5.4-mini (all 4 agents)                         │
 │  ├── JSON response format (response_format: json_object)        │
 │  └── 8192 max completion tokens per call                        │
 │                                                                 │

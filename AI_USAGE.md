@@ -7,6 +7,8 @@
 
 This document discloses all AI tools used in the development of Promethean Studio, as required by course policy.
 
+> _Last updated: April 21, 2026 — refreshed for Phase 3 submission._
+
 ---
 
 ## Tools Used
@@ -68,6 +70,32 @@ This document discloses all AI tools used in the development of Promethean Studi
 
 ---
 
+### 3. Cursor IDE + Claude Opus 4.7 (Phase 3 Documentation Polish)
+
+**Version:** Claude Opus 4.7 accessed via Cursor IDE (April 2026)
+
+**What it was used for:**
+- Auditing Phase 2 documentation for model-version consistency and producing batch edits across 8 files
+- Drafting the Phase 3 screenshot index and assisting with repo structure alignment to the course-mandated layout
+- Cross-referencing the Phase 2 professor feedback against the course rubric to produce a per-person Phase 3 work plan
+- Authoring the CRM baseline-comparison tooling — `phase-3/scripts/run_crm_baseline.sh` (9-run HTTP pipeline driver) and `phase-3/scripts/compute_baseline_comparison.py` (trace parser → `baseline_comparison_crm.csv`)
+- Drafting the baseline-comparison analysis in `phase-3/evidence/baseline_comparison_crm.md` and the individual contribution reflection in `phase-3/reflections/yiying_lu.md`
+
+**What was changed manually afterward:**
+- All suggested edits reviewed line-by-line before committing
+- ASCII diagram alignment verified manually after automated find/replace, with width adjustments applied where needed
+- Branch commit messages and PR descriptions written by the team member
+- Baseline-comparison metric definitions (especially the `agent2_classified_count` vs `agent4_injected_gate_count` split and the L0-infeasibility rule) specified by the team member before the scripts were written; outlier interpretation for `tc-01-v2-r3` reviewed and approved against the raw trace JSONs before landing in the analysis
+- Reflection content (role framing, Phase 2 contributions, hours) written/edited by the team member; AI draft used only as a starting scaffold
+
+**What was independently verified:**
+- `ripgrep` search confirmed zero remaining `GPT-5.2` references in the Phase 2 docs after the consistency fix
+- `git diff` reviewed before the fix branch was pushed
+- Screenshot captions and cross-references hand-verified against the actual UI
+- Every number in `baseline_comparison_crm.md` traced back to a row in `baseline_comparison_crm.csv`; CSV rows spot-checked against the underlying trace JSONs in `phase-3/traces/tc-01*/`
+
+---
+
 ## Prompts Used
 
 The prompts injected into each agent at runtime are defined in the following source files in the repository:
@@ -85,4 +113,4 @@ The full prompt text for each agent can be read directly from the source code. A
 
 ## Summary
 
-AI tools were used as a force multiplier for implementation speed, particularly for boilerplate code, documentation scaffolding, and demo video production. All core design decisions — the system spectrum rubric, agent responsibilities, evaluation criteria, risk analysis, and governance policy — were made by the team. All AI-generated content was reviewed, corrected where needed, and independently verified before inclusion in the submission.
+AI tools were used as a force multiplier for implementation speed, documentation scaffolding, demo video production, and Phase 3 submission polish. All core design decisions — the system spectrum rubric, agent responsibilities, evaluation criteria, risk analysis, and governance policy — were made by the team. All AI-generated content was reviewed, corrected where needed, and independently verified before inclusion in the submission.

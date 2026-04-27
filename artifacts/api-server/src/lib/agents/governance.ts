@@ -26,13 +26,18 @@ Configure:
 - costLimitPerRun: hard limit to abort run (number)
 - executionTimeoutMs: maximum allowed run time in milliseconds (number)
 
-Also add governance nodes where appropriate (human gate nodes, checkpoint nodes).
+You may also add governance nodes (human gate nodes, checkpoint nodes) where appropriate.
 Edge types must be one of: "default", "conditional", "error", "parallel", "loop"
+
+CRITICAL OUTPUT CONTRACT:
+- The "nodes" array you return must contain EVERY node from the orchestrated input, preserving id, type, position, and all data fields — PLUS any new governance nodes you add. Do NOT return only the governance nodes. Do NOT drop, rename, or merge existing nodes.
+- The "edges" array must contain all original edges PLUS any new edges you add for governance (e.g., routing through a new human-gate node). If you insert a gate between two existing nodes, add the new edges; do not silently rewire originals unless a gate replaces a direct edge.
+- If you add no governance nodes, return the original nodes and edges unchanged.
 
 Return ONLY valid JSON:
 {
-  "nodes": [],
-  "edges": [],
+  "nodes": [ /* ALL original orchestrated nodes + any new governance nodes */ ],
+  "edges": [ /* ALL original edges + any new governance edges */ ],
   "governanceConfig": {
     "loggingLevel": "standard",
     "autoSnapshot": true,
@@ -71,7 +76,7 @@ Configure appropriate thresholds, alert channels, and logging based on risk prof
 
   const response = await openai.chat.completions.create({
     model: "gpt-5.4-mini-2026-03-17",
-    max_completion_tokens: 8192,
+    max_completion_tokens: 16384,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userPrompt },
@@ -85,20 +90,46 @@ Configure appropriate thresholds, alert channels, and logging based on risk prof
   const raw = JSON.parse(content);
   const parsed = GovernanceResultSchema.parse(raw);
 
-  // Use original nodes if governance agent didn't add new ones
-  if (!parsed.nodes || parsed.nodes.length === 0) {
-    parsed.nodes = nodes.map((n) => ({ ...n, data: { ...n.data, status: n.data.status ?? "idle" } }));
-    parsed.edges = edges.map((e) => ({ ...e, type: (e.type ?? "default") as "default" | "conditional" | "error" | "parallel" | "loop" }));
-  } else {
-    // Preserve original positions
-    parsed.nodes = parsed.nodes.map((node: NodeType) => {
-      const original = nodes.find((n) => n.id === node.id);
+  // Defensive merge: the governance agent sometimes returns only the new gate/
+  // checkpoint nodes it added, which would otherwise wipe the orchestrated graph.
+  // Treat the LLM response as additive: keep every original orchestrated node,
+  // and overlay by id with any updates or new nodes the agent returned.
+  const returnedNodeIds = new Set(parsed.nodes.map((n) => n.id));
+  const mergedNodes: PrometheanNode[] = nodes.map((original) => {
+    if (returnedNodeIds.has(original.id)) {
+      const updated = parsed.nodes.find((n) => n.id === original.id)!;
       return {
-        ...node,
+        ...original,
+        ...updated,
         type: "custom",
-        position: node.position ?? original?.position ?? { x: 0, y: 0 },
+        position: updated.position ?? original.position,
+        data: { ...original.data, ...updated.data },
       };
-    });
+    }
+    return { ...original, data: { ...original.data, status: original.data.status ?? "idle" } };
+  });
+  const originalNodeIds = new Set(nodes.map((n) => n.id));
+  const addedNodes: NodeType[] = parsed.nodes
+    .filter((n) => !originalNodeIds.has(n.id))
+    .map((node) => ({
+      ...node,
+      type: "custom",
+      position: node.position ?? { x: 0, y: 0 },
+    }));
+
+  const returnedEdgeIds = new Set(parsed.edges.map((e) => e.id));
+  const mergedEdges: PrometheanEdge[] = [
+    ...edges
+      .filter((e) => !returnedEdgeIds.has(e.id))
+      .map((e) => ({ ...e, type: (e.type ?? "default") as "default" | "conditional" | "error" | "parallel" | "loop" })),
+    ...parsed.edges.map((e) => ({ ...e, type: (e.type ?? "default") as "default" | "conditional" | "error" | "parallel" | "loop" })),
+  ];
+
+  parsed.nodes = [...mergedNodes, ...addedNodes] as typeof parsed.nodes;
+  parsed.edges = mergedEdges as typeof parsed.edges;
+
+  if (addedNodes.length > 0 || parsed.edges.length !== edges.length) {
+    logger.info({ originalNodes: nodes.length, addedNodes: addedNodes.length, finalNodes: parsed.nodes.length }, "Governance merged nodes");
   }
 
   return parsed;

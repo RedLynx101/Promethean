@@ -47,3 +47,11 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Env files — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Phase 3 evidence — ignore curl/run logs, keep trace JSONs
+phase-3/scripts/*.log

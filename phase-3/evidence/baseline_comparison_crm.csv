@@ -1,0 +1,10 @@
+run_id,variant,variant_label,run_index,phase_reached,node_count,agent2_classified_count,agent4_injected_gate_count,L0_count,L1_count,L2_count,L3_count,L4_count,L5_count,promethean_cost_usd,promethean_latency_est_ms,wall_clock_latency_ms,baseline_L0_cost_usd,baseline_L4_cost_usd,baseline_L5_cost_usd,baseline_L0_infeasible_nodes,cost_vs_L0_ratio,cost_vs_L4_ratio,cost_vs_L5_ratio,agent4_logging_level,agent4_alert_channel_count,agent4_cost_threshold_usd,agent4_human_gate_count
+tc-01,V1,Lead Qualification,1,deployed,14,11,3,9,1,0,1,0,0,0.012,1400,45820,0.0014,0.35,0.7,1,8.57,0.034,0.017,standard,2,0.2,1
+tc-01-r2,V1,Lead Qualification,2,deployed,9,9,0,7,1,0,1,0,0,0.02,1800,38100,0.0009,0.225,0.45,1,22.22,0.089,0.044,standard,2,0.25,2
+tc-01-r3,V1,Lead Qualification,3,deployed,10,10,0,8,1,0,1,0,0,0.012,1800,53018,0.001,0.25,0.5,1,12.0,0.048,0.024,standard,2,0.02,1
+tc-01-v2,V2,Customer Churn Prevention,1,deployed,12,12,0,9,1,1,1,0,0,0.045,2500,63881,0.0012,0.3,0.6,2,37.5,0.15,0.075,standard,2,0.1,0
+tc-01-v2-r2,V2,Customer Churn Prevention,2,deployed,11,11,0,8,1,1,1,0,0,0.045,2500,60221,0.0011,0.275,0.55,2,40.91,0.164,0.082,verbose,3,0.15,0
+tc-01-v2-r3,V2,Customer Churn Prevention,3,deployed,13,13,0,10,1,1,1,0,0,0.082,4200,63855,0.0013,0.325,0.65,2,63.08,0.252,0.126,verbose,3,0.08,1
+tc-01-v3,V3,Sales Opportunity Progression,1,deployed,12,12,0,8,2,0,1,1,0,0.045,2500,59280,0.0012,0.3,0.6,2,37.5,0.15,0.075,verbose,2,0.35,0
+tc-01-v3-r2,V3,Sales Opportunity Progression,2,deployed,11,11,0,8,1,0,1,1,0,0.032,3200,51804,0.0011,0.275,0.55,2,29.09,0.116,0.058,verbose,3,0.25,0
+tc-01-v3-r3,V3,Sales Opportunity Progression,3,deployed,10,10,0,7,1,0,1,1,0,0.045,2500,53611,0.001,0.25,0.5,2,45.0,0.18,0.09,verbose,3,0.35,0

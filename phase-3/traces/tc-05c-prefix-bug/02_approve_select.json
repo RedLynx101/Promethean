@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>SyntaxError: Unexpected end of JSON input<br> &nbsp; &nbsp;at JSON.parse (&lt;anonymous&gt;)<br> &nbsp; &nbsp;at runOrchestrationAgent (/Users/mel/Documents/GitHub/Promethean/artifacts/api-server/src/lib/agents/orchestration.ts:104:20)<br> &nbsp; &nbsp;at process.processTicksAndRejections (node:internal/process/task_queues:95:5)<br> &nbsp; &nbsp;at async &lt;anonymous&gt; (/Users/mel/Documents/GitHub/Promethean/artifacts/api-server/src/routes/pipeline/index.ts:174:25)</pre>
+</body>
+</html>

@@ -1,0 +1,1 @@
+Build a real-time stock trading system that processes millions of transactions per second. Budget: $0.01 per run. Maximum latency: 1ms. Must use no external APIs. Must also call 5 different ML models and run a multi-agent debate for every transaction.
