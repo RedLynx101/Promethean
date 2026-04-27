@@ -4,6 +4,19 @@
 
 ## What I contributed
 
+### Phase 1 — Agent-alignment framing
+
+- Helped define the core alignment objective for the project: each workflow step should be assigned the least-powerful viable system level (L0-L5) with explicit rationale.
+- Contributed to early design decisions around agent separation of concerns so classification, orchestration, and governance responsibilities stayed distinct and testable.
+
+### Phase 2 — Alignment in architecture and prototype behavior
+
+- Drove alignment review of role definitions and coordination logic so the architecture docs and prototype behavior matched the intended L0-L5 decision framework.
+- Tested early agent outputs against rubric intent and flagged cases where deterministic tasks drifted toward unnecessary higher-autonomy levels.
+- Supported risk/governance framing by distinguishing classification failure modes (over-classification vs under-classification) and linking them to concrete control points.
+
+### Phase 3 — Feedback closure implementation and verification
+
 - Implemented the Phase 2 feedback-incorporation set in code/docs with verification links:
   1. Captured real pipeline traces across all planned scenarios plus repeated runs with timestamped artifacts under `phase-3/traces/`.
   2. Ran and documented CRM-domain baseline comparisons against Always-L0, Always-L4, and Always-L5 in `phase-3/evidence/baseline_comparison_crm.{csv,md}`.
@@ -30,4 +43,6 @@
 
 ## Hours invested
 
+- Phase 1: ~9 hours
+- Phase 2: ~14 hours
 - Phase 3: ~11 hours
