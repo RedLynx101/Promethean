@@ -175,11 +175,11 @@ Plan for roughly 3–4 focused hours; most time goes into expert review and base
 
 After the session you should have:
 
-- [ ] `phase-3/traces/tc-01/` through `tc-05d/` — full JSON trace per scenario
-- [ ] `phase-3/evidence/evaluation_results.csv` — one populated row per scenario
-- [ ] `phase-3/evidence/failure_log.md` — at least FC-01 and FC-02 filled in
-- [ ] `phase-3/evidence/version_notes.md` — entries for any fix commits that landed during evaluation
-- [ ] `phase-3/screenshots/01_*.png` through `08_*.png`
-- [ ] At least one rejection-with-feedback trace to support the HITL claim
+- [x] `phase-3/traces/tc-01/` through `tc-05d/` — full JSON trace per scenario
+- [x] `phase-3/evidence/evaluation_results.csv` — one populated row per scenario
+- [x] `phase-3/evidence/failure_log.md` — at least FC-01 and FC-02 filled in
+- [x] `phase-3/evidence/version_notes.md` — entries for any fix commits that landed during evaluation
+- [x] `phase-3/screenshots/01_*.png` through `08_*.png`
+- [x] At least one rejection-with-feedback trace to support the HITL claim
 
 If any checkbox is empty, the evidence package is incomplete for rubric §4 and §6.
