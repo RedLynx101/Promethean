@@ -4,6 +4,19 @@
 
 ## What I contributed
 
+### Phase 1 — Stack exploration and feasibility validation
+
+- Evaluated early technical options and feasibility constraints for the proposed architecture (frontend/backend/database/LLM integration) to reduce implementation risk before the build phase.
+- Helped pressure-test initial assumptions around development workflow, dependency footprint, and integration complexity for a multi-agent pipeline product.
+
+### Phase 2 — Prototype QA and technical validation
+
+- Supported prototype stabilization by testing core flows across the Command Center, Template Library, and Workflow Wizard surfaces and flagging integration inconsistencies.
+- Reviewed evaluation-plan practicality from an execution standpoint (what could be run reliably in the available environment and time window).
+- Helped validate that implemented behavior matched the Phase 2 architecture and coordination docs, especially around phase sequencing and review gates.
+
+### Phase 3 — Evidence reliability and demo execution
+
 - Took primary ownership of the final demo recording workflow: sequenced the live walkthrough, validated that required scenes were captured (problem/user, architecture, end-to-end pipeline, evidence layer, failure case, final output), and coordinated final recording passes.
 - Focused on environment and stack reliability for Phase 3 runs: validated local startup flow, dependency state, and service connectivity before evaluation sessions.
 - Helped test agent behavior across scenarios and sanity-checked outputs against the L0-L5 rubric expectations for deterministic vs. agentic steps.
@@ -24,4 +37,6 @@
 
 ## Hours invested
 
+- Phase 1: ~8 hours
+- Phase 2: ~12 hours
 - Phase 3: ~10 hours

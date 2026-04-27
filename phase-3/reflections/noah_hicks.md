@@ -4,6 +4,20 @@
 
 ## What I contributed
 
+### Phase 1 — Project foundation and direction
+
+- Originated and framed the core project concept: Promethean as a right-sizing system that maps workflow steps to the L0-L5 autonomy spectrum rather than defaulting to "more AI."
+- Drove early system framing and high-level architecture direction, including the four-agent decomposition/select/orchestrate/govern structure and the human-in-the-loop gate model.
+- Led initial repo setup and delivery scaffolding so the team could build in parallel with a shared structure and clear milestones.
+
+### Phase 2 — Core build and architecture execution
+
+- Owned a large share of Phase 2 implementation and integration work that turned the concept into a functional product surface (backend pipeline + frontend workflow experience working together end-to-end).
+- Drove architecture-to-implementation translation: ensured the role definitions, coordination logic, and system-state model were reflected in actual routes, data flow, and UI behavior.
+- Led system-level QA and integration passes across team contributions so the app operated as one coherent product instead of disconnected components.
+
+### Phase 3 — Delivery integration and final submission
+
 - Coordinated the Phase 3 plan and drove the team through final deliverable scope (evaluation runs, evidence quality bar, and final packaging order).
 - Reviewed and integrated cross-team outputs into a coherent submission set, including final report alignment, folder organization, and submission packet consistency.
 - Led final QA passes across deliverables to ensure each rubric section had corresponding artifacts (report sections, evidence files, screenshots, traces, and reflections).
@@ -23,4 +37,6 @@
 
 ## Hours invested
 
+- Phase 1: ~24 hours
+- Phase 2: ~32 hours
 - Phase 3: ~12 hours
