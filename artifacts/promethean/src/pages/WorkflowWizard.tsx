@@ -380,7 +380,7 @@ export default function WorkflowWizard() {
         </div>
         <div>
           <h1 className="font-orbitron text-sm font-bold tracking-wider" style={{ color: "#00d4ff" }}>
-            PROMETHEUS INTAKE
+            PROMETHEAN INTAKE
           </h1>
           <p className="text-xs" style={{ color: "rgba(230,237,243,0.4)" }}>
             {stage === "reviewingSuggestions" || stage.startsWith("editing")
@@ -708,7 +708,7 @@ function FormPhase({ state, setState, error, onSubmit }: FormPhaseProps) {
         </div>
         <div>
           <h1 className="font-orbitron text-sm font-bold tracking-wider" style={{ color: "#00d4ff" }}>
-            PROMETHEUS INTAKE
+            PROMETHEAN INTAKE
           </h1>
           <p className="text-xs" style={{ color: "rgba(230,237,243,0.4)" }}>
             Step 1 of 2 · Workflow basics

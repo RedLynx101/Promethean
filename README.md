@@ -2,7 +2,7 @@
 
 **AI workflow orchestration studio with a four-agent pipeline, human-in-the-loop approval gates, and a visual graph editor.**
 
-Promethean takes a natural-language description of a business workflow and transforms it into a fully orchestrated, governed, deployable pipeline — using a sequence of specialized AI agents, with human review at every stage.
+Promethean takes a natural-language description of a business workflow and drafts a governed workflow specification using specialized AI agents, with human review at every stage. The current alpha includes seeded demonstrations and a working orchestration path; it is not evidence that the generated workflow has been deployed into a production environment.
 
 ![Command Center](screenshots/dashboard.jpg)
 
@@ -32,7 +32,7 @@ Promethean takes a natural-language description of a business workflow and trans
 
 Every phase transition is a **human-in-the-loop approval gate** — you review the AI's work in a visual editor, make edits, approve or reject with feedback, and only then advance to the next stage.
 
-Once deployed, workflows appear in the Command Center for execution tracking, latency monitoring, cost analysis, and alerting.
+Approved workflow drafts can appear in the Command Center with seeded execution, latency, cost, and alert data for interface and governance testing. Those dashboards are demonstration data unless tied to a separately reproduced run.
 
 ---
 
