@@ -1,0 +1,439 @@
+{
+  "format": "promethean-workflow",
+  "version": "2.0",
+  "exportedAt": "2026-09-05T05:02:52.395Z",
+  "workflow": {
+    "id": "72e0be45-e4bc-4f98-81b7-ea77d766e89d",
+    "name": "Clean and route a CSV",
+    "description": "Validate incoming orders, normalize values, and route valid rows with explicit deterministic rules.",
+    "revision": 1,
+    "schemaVersion": "2.0",
+    "rubricVersion": "2.0",
+    "exampleId": "csv-routing",
+    "status": "draft",
+    "createdAt": "2026-09-05T04:52:09.482Z",
+    "updatedAt": "2026-09-05T04:52:09.482Z",
+    "brief": {
+      "goal": "Validate incoming orders, normalize values, and route valid rows with explicit deterministic rules.",
+      "inputs": "A synthetic CSV of orders with id, amount and region.",
+      "outputs": "Validated rows and ready/review routes",
+      "volume": "Manual example runs; no schedule is configured",
+      "constraints": [
+        "Do not execute arbitrary code",
+        "Local demonstration data only",
+        "No model is necessary"
+      ],
+      "successCriteria": [
+        "Reject malformed rows",
+        "Route each valid row deterministically"
+      ],
+      "unknowns": [
+        "Production data distribution and operational error tolerance have not been measured"
+      ]
+    },
+    "decision": {
+      "recommendation": "Start with the deterministic candidate and compare the shared test cases.",
+      "rationale": "The curated cases make the tradeoff inspectable. Escalate complexity only when measured results justify it.",
+      "candidateId": "enhanced-rules",
+      "evidenceIds": [
+        "rubric-v2",
+        "csv-fixtures",
+        "common-grader"
+      ],
+      "status": "proposed",
+      "questions": []
+    },
+    "candidates": [
+      {
+        "id": "rules",
+        "name": "Simple rules",
+        "archetype": "rules",
+        "summary": "Strict field parsing and exact region matching.",
+        "tradeoffs": [
+          "Easy to inspect",
+          "Misses phrasing outside the declared rules"
+        ],
+        "evidenceIds": [
+          "csv-fixtures"
+        ],
+        "requiresModel": false,
+        "implementation": "rules"
+      },
+      {
+        "id": "enhanced-rules",
+        "name": "Normalized rules",
+        "archetype": "rules",
+        "summary": "Normalize whitespace, currency, and regional aliases before validation.",
+        "tradeoffs": [
+          "Still deterministic and inexpensive",
+          "Coverage is limited to the curated vocabulary"
+        ],
+        "evidenceIds": [
+          "csv-fixtures"
+        ],
+        "requiresModel": false,
+        "implementation": "enhanced-rules"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "validate",
+        "label": "Check the input",
+        "description": "Require a CSV string with a bounded size.",
+        "kind": "validate",
+        "archetype": "rules",
+        "config": {
+          "requiredFields": [
+            "csv"
+          ],
+          "maxLength": 16000
+        },
+        "provenance": {
+          "requirement": "Require a CSV string with a bounded size.",
+          "rationale": "A bounded validate step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "csv-fixtures"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "csv-clean",
+            "csv-normalize",
+            "csv-invalid"
+          ],
+          "status": "untested"
+        }
+      },
+      {
+        "id": "normalize",
+        "label": "Validate and normalize rows",
+        "description": "Reject invalid amount or region values; keep the row-level error.",
+        "kind": "transform",
+        "archetype": "rules",
+        "config": {
+          "operation": "csv-normalize"
+        },
+        "provenance": {
+          "requirement": "Reject invalid amount or region values; keep the row-level error.",
+          "rationale": "A bounded transform step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "csv-fixtures"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "csv-clean",
+            "csv-normalize",
+            "csv-invalid"
+          ],
+          "status": "untested"
+        }
+      },
+      {
+        "id": "route",
+        "label": "Route valid orders",
+        "description": "Only clean orders enter the ready route.",
+        "kind": "condition",
+        "archetype": "rules",
+        "config": {
+          "field": "valid",
+          "equals": true,
+          "trueRoute": "ready",
+          "falseRoute": "review"
+        },
+        "provenance": {
+          "requirement": "Only clean orders enter the ready route.",
+          "rationale": "A bounded condition step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "csv-fixtures"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "csv-clean",
+            "csv-normalize",
+            "csv-invalid"
+          ],
+          "status": "untested"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "validate-normalize",
+        "source": "validate",
+        "target": "normalize"
+      },
+      {
+        "id": "normalize-route",
+        "source": "normalize",
+        "target": "route"
+      }
+    ],
+    "tests": [
+      {
+        "id": "csv-clean",
+        "name": "Clean order",
+        "input": {
+          "csv": "id,amount,region\nA1,42,north"
+        },
+        "expected": {
+          "valid": true,
+          "route": "ready",
+          "rows": [
+            {
+              "id": "A1",
+              "amount": 42,
+              "region": "north",
+              "route": "north-team"
+            }
+          ]
+        },
+        "description": "Both candidates should accept explicit valid fields."
+      },
+      {
+        "id": "csv-normalize",
+        "name": "Formatting variants",
+        "input": {
+          "csv": "id,amount,region\nA2,$25, North "
+        },
+        "expected": {
+          "valid": true,
+          "route": "ready"
+        },
+        "description": "The simple parser rejects the currency marker; normalization should accept it."
+      },
+      {
+        "id": "csv-invalid",
+        "name": "Invalid amount",
+        "input": {
+          "csv": "id,amount,region\nA3,many,north"
+        },
+        "expected": {
+          "valid": false,
+          "route": "review"
+        },
+        "description": "Neither implementation may invent a numeric value."
+      }
+    ],
+    "sampleInput": {
+      "csv": "id,amount,region\nA1,42,north\nA2,$25, South "
+    },
+    "designSource": "local-rubric",
+    "model": null
+  },
+  "evidence": [
+    {
+      "id": "rubric-v2",
+      "title": "The least complex sufficient solution",
+      "source": "docs/architecture/canonical-rubric.md",
+      "excerpt": "A process change or deterministic rule is a valid outcome. Capability and permission are separate. Use task evidence before increasing complexity.",
+      "category": "methodology",
+      "revision": "2.0",
+      "verified": true
+    },
+    {
+      "id": "csv-fixtures",
+      "title": "CSV validation and routing fixture",
+      "source": "packages/core/src/catalog.ts",
+      "excerpt": "Synthetic rows exercise numeric parsing, regional routing, and invalid data. No model is necessary for the declared rules.",
+      "category": "example",
+      "revision": "2.0",
+      "verified": true
+    },
+    {
+      "id": "common-grader",
+      "title": "Independent field-based acceptance grader",
+      "source": "packages/core/src/execution.ts#evaluateExpected",
+      "excerpt": "Every candidate receives the same case set and expected fields. The deterministic grader compares expected subsets, not model confidence or self-assigned capability labels.",
+      "category": "evaluation",
+      "revision": "2.0",
+      "verified": true
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "ece65821-68c9-4599-af6b-250fd4133b90",
+      "workflowId": "72e0be45-e4bc-4f98-81b7-ea77d766e89d",
+      "workflowRevision": 1,
+      "createdAt": "2026-09-05T04:52:09.496Z",
+      "mode": "local",
+      "results": [
+        {
+          "candidateId": "rules",
+          "name": "Simple rules",
+          "cases": [
+            {
+              "caseId": "csv-clean",
+              "name": "Clean order",
+              "passed": true,
+              "expected": {
+                "valid": true,
+                "route": "ready",
+                "rows": [
+                  {
+                    "id": "A1",
+                    "amount": 42,
+                    "region": "north",
+                    "route": "north-team"
+                  }
+                ]
+              },
+              "actual": {
+                "valid": true,
+                "route": "ready",
+                "rows": [
+                  {
+                    "id": "A1",
+                    "amount": 42,
+                    "region": "north",
+                    "route": "north-team"
+                  }
+                ]
+              },
+              "runId": "1f34bf0a-bbef-4b8b-abd7-8a7f0c4ec669",
+              "error": null
+            },
+            {
+              "caseId": "csv-normalize",
+              "name": "Formatting variants",
+              "passed": false,
+              "expected": {
+                "valid": true,
+                "route": "ready"
+              },
+              "actual": {
+                "valid": false,
+                "route": "review"
+              },
+              "runId": "35f38bec-3f8e-4c86-a2b8-c2eef3364b00",
+              "error": null
+            },
+            {
+              "caseId": "csv-invalid",
+              "name": "Invalid amount",
+              "passed": true,
+              "expected": {
+                "valid": false,
+                "route": "review"
+              },
+              "actual": {
+                "valid": false,
+                "route": "review"
+              },
+              "runId": "d64984ea-d680-44b3-9d56-c2553f49f78f",
+              "error": null
+            }
+          ],
+          "passed": 2,
+          "total": 3,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 8.755899999999656
+          }
+        },
+        {
+          "candidateId": "enhanced-rules",
+          "name": "Normalized rules",
+          "cases": [
+            {
+              "caseId": "csv-clean",
+              "name": "Clean order",
+              "passed": true,
+              "expected": {
+                "valid": true,
+                "route": "ready",
+                "rows": [
+                  {
+                    "id": "A1",
+                    "amount": 42,
+                    "region": "north",
+                    "route": "north-team"
+                  }
+                ]
+              },
+              "actual": {
+                "valid": true,
+                "route": "ready",
+                "rows": [
+                  {
+                    "id": "A1",
+                    "amount": 42,
+                    "region": "north",
+                    "route": "north-team"
+                  }
+                ]
+              },
+              "runId": "31ce6a87-d71d-44f1-95f2-41877ca2f5d8",
+              "error": null
+            },
+            {
+              "caseId": "csv-normalize",
+              "name": "Formatting variants",
+              "passed": true,
+              "expected": {
+                "valid": true,
+                "route": "ready"
+              },
+              "actual": {
+                "valid": true,
+                "route": "ready"
+              },
+              "runId": "4083fcf8-c4bf-4dca-bce8-539674d5c2a1",
+              "error": null
+            },
+            {
+              "caseId": "csv-invalid",
+              "name": "Invalid amount",
+              "passed": true,
+              "expected": {
+                "valid": false,
+                "route": "review"
+              },
+              "actual": {
+                "valid": false,
+                "route": "review"
+              },
+              "runId": "0ad934d3-34b2-49df-b5dc-c10c54237534",
+              "error": null
+            }
+          ],
+          "passed": 3,
+          "total": 3,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 7.030499999999847
+          }
+        }
+      ],
+      "recommendation": "Normalized rules meets all 3 declared cases. Prefer the least complex passing candidate; this small fixture set does not establish production accuracy. Constraints retained: Do not execute arbitrary code Local demonstration data only No model is necessary",
+      "rubricVersion": "2.0",
+      "evaluatorVersion": "expected-fields-2.0",
+      "caseSetHash": "9f52c66c88964ce5493e9339f9cfef71cddff8c19429da35a4017bda3a47000b"
+    }
+  ],
+  "requirements": [
+    "Node.js 24+",
+    "Promethean 2.0 shared runtime or CLI"
+  ],
+  "runbook": "Validate the package checksum and graph before importing. Run deterministic tests with the Promethean CLI; comparison suppresses all effects. Review the brief, provenance, and constraints. Live execution is optional and uses ordinary budget, approval, and idempotency checks. Included inputs are verified synthetic fixtures. Workflow descriptions and configuration are part of the exported definition; review them before sharing.",
+  "checksum": "902da47c5aa2a3a0aa8a3dd650bd4d04881001c7f6208cc69cb382059df7eecc"
+}

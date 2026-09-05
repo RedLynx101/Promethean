@@ -1,0 +1,148 @@
+{
+  "recordedAt": "2026-09-05T04:52:39.458Z",
+  "synthetic": true,
+  "before": {
+    "limitUsd": 5,
+    "spentUsd": 0.0014157999999999998,
+    "reservedUsd": 0,
+    "remainingUsd": 4.9985842
+  },
+  "after": {
+    "limitUsd": 5,
+    "spentUsd": 0.0032627999999999997,
+    "reservedUsd": 0,
+    "remainingUsd": 4.9967372
+  },
+  "outboxEffects": 0,
+  "examples": [
+    {
+      "id": "csv-routing",
+      "workflowRevision": 1,
+      "rubricVersion": "2.0",
+      "evaluatorVersion": "expected-fields-2.0",
+      "caseSetHash": "9f52c66c88964ce5493e9339f9cfef71cddff8c19429da35a4017bda3a47000b",
+      "mode": "local",
+      "results": [
+        {
+          "candidate": "Simple rules",
+          "passed": 2,
+          "total": 3,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 8.755899999999656
+          }
+        },
+        {
+          "candidate": "Normalized rules",
+          "passed": 3,
+          "total": 3,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 7.030499999999847
+          }
+        }
+      ],
+      "recommendation": "Normalized rules meets all 3 declared cases. Prefer the least complex passing candidate; this small fixture set does not establish production accuracy. Constraints retained: Do not execute arbitrary code Local demonstration data only No model is necessary"
+    },
+    {
+      "id": "inbound-triage",
+      "workflowRevision": 1,
+      "rubricVersion": "2.0",
+      "evaluatorVersion": "expected-fields-2.0",
+      "caseSetHash": "175c92cd82a20cbc1d8e854cbe2bddc3cdd1cc498721ef8e7f234e4dca9cba6e",
+      "mode": "live",
+      "results": [
+        {
+          "candidate": "Simple rules",
+          "passed": 2,
+          "total": 4,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 15.142599999999675
+          }
+        },
+        {
+          "candidate": "Expanded rules",
+          "passed": 3,
+          "total": 4,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 16.119099999999435
+          }
+        },
+        {
+          "candidate": "Bounded model workflow",
+          "passed": 3,
+          "total": 4,
+          "usage": {
+            "inputTokens": 1297,
+            "outputTokens": 481,
+            "costUsd": 0.0008366000000000001,
+            "model": "gpt-5.6-luna",
+            "latencyMs": 15036.363699999996
+          }
+        }
+      ],
+      "recommendation": "Neither compared approach meets all declared requirements. Keep human review, examine failed cases, and revise the taxonomy or design before enabling. Constraints retained: Do not execute arbitrary code Local demonstration data only Human approval before the local outbox No external delivery"
+    },
+    {
+      "id": "knowledge-support",
+      "workflowRevision": 1,
+      "rubricVersion": "2.0",
+      "evaluatorVersion": "expected-fields-2.0",
+      "caseSetHash": "145a9a1e868b21e45896a0fbda833d5a8bf0bd957f1bc368db6d0adb49224605",
+      "mode": "live",
+      "results": [
+        {
+          "candidate": "Simple rules",
+          "passed": 2,
+          "total": 3,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 18.1775000000016
+          }
+        },
+        {
+          "candidate": "Keyword retrieval",
+          "passed": 3,
+          "total": 3,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 21.826600000000326
+          }
+        },
+        {
+          "candidate": "Bounded model workflow",
+          "passed": 3,
+          "total": 3,
+          "usage": {
+            "inputTokens": 2532,
+            "outputTokens": 420,
+            "costUsd": 0.0010103999999999998,
+            "model": "gpt-5.6-luna",
+            "latencyMs": 14108.130900000007
+          }
+        }
+      ],
+      "recommendation": "Keyword retrieval meets all 3 declared cases. Prefer the least complex passing candidate; this small fixture set does not establish production accuracy. Constraints retained: Do not execute arbitrary code Local demonstration data only Human approval before the local outbox No external delivery"
+    }
+  ]
+}

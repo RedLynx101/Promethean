@@ -1,0 +1,342 @@
+{
+  "recordedAt": "2026-09-05T05:02:55.283Z",
+  "description": "Each package was copied into its own directory and evaluated through the installed CLI, with no server or key.",
+  "reports": [
+    {
+      "id": "csv-routing",
+      "validated": true,
+      "expectedTestExit": 0,
+      "actualTestExit": 0,
+      "result": {
+        "candidateId": "enhanced-rules",
+        "name": "Normalized rules",
+        "cases": [
+          {
+            "caseId": "csv-clean",
+            "name": "Clean order",
+            "passed": true,
+            "expected": {
+              "valid": true,
+              "route": "ready",
+              "rows": [
+                {
+                  "id": "A1",
+                  "amount": 42,
+                  "region": "north",
+                  "route": "north-team"
+                }
+              ]
+            },
+            "actual": {
+              "csv": "id,amount,region\nA1,42,north",
+              "validated": true,
+              "rows": [
+                {
+                  "id": "A1",
+                  "amount": 42,
+                  "region": "north",
+                  "route": "north-team"
+                }
+              ],
+              "errors": [],
+              "valid": true,
+              "accepted": 1,
+              "rejected": 0,
+              "conditionMatched": true,
+              "route": "ready"
+            },
+            "runId": "cli-baf0bf04-0b9a-4919-aeca-36353370aa92",
+            "error": null
+          },
+          {
+            "caseId": "csv-normalize",
+            "name": "Formatting variants",
+            "passed": true,
+            "expected": {
+              "valid": true,
+              "route": "ready"
+            },
+            "actual": {
+              "csv": "id,amount,region\nA2,$25, North ",
+              "validated": true,
+              "rows": [
+                {
+                  "id": "A2",
+                  "amount": 25,
+                  "region": "north",
+                  "route": "north-team"
+                }
+              ],
+              "errors": [],
+              "valid": true,
+              "accepted": 1,
+              "rejected": 0,
+              "conditionMatched": true,
+              "route": "ready"
+            },
+            "runId": "cli-a85f97ed-18c4-415c-91bd-672681ba133f",
+            "error": null
+          },
+          {
+            "caseId": "csv-invalid",
+            "name": "Invalid amount",
+            "passed": true,
+            "expected": {
+              "valid": false,
+              "route": "review"
+            },
+            "actual": {
+              "csv": "id,amount,region\nA3,many,north",
+              "validated": true,
+              "rows": [],
+              "errors": [
+                {
+                  "row": 2,
+                  "error": "Invalid id, amount, region, or column count."
+                }
+              ],
+              "valid": false,
+              "accepted": 0,
+              "rejected": 1,
+              "conditionMatched": false,
+              "route": "review"
+            },
+            "runId": "cli-d6956663-9c66-4493-885e-f700d925b1f7",
+            "error": null
+          }
+        ],
+        "passed": 3,
+        "total": 3,
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "costUsd": 0,
+          "model": null,
+          "latencyMs": 4.196000000000026
+        },
+        "workflowId": "72e0be45-e4bc-4f98-81b7-ea77d766e89d",
+        "workflowRevision": 1,
+        "caseSetHash": "9f52c66c88964ce5493e9339f9cfef71cddff8c19429da35a4017bda3a47000b",
+        "rubricVersion": "2.0",
+        "evaluatorVersion": "expected-fields-2.0",
+        "effects": "suppressed",
+        "mode": "local"
+      }
+    },
+    {
+      "id": "inbound-triage",
+      "validated": true,
+      "expectedTestExit": 1,
+      "actualTestExit": 1,
+      "result": {
+        "candidateId": "enhanced-rules",
+        "name": "Expanded rules",
+        "cases": [
+          {
+            "caseId": "triage-billing",
+            "name": "Explicit billing request",
+            "passed": true,
+            "expected": {
+              "route": "billing"
+            },
+            "actual": {
+              "message": "I have a billing question about my invoice.",
+              "email": "sample@example.invalid",
+              "validated": true,
+              "route": "billing",
+              "needsReview": false,
+              "reason": "Matched the declared deterministic vocabulary.",
+              "draft": "Thank you for contacting us. Your request is ready for the billing team to review.",
+              "citations": [],
+              "effectsSuppressed": true
+            },
+            "runId": "cli-c587956f-c81e-49d8-a5b1-85fd683c5e83",
+            "error": null
+          },
+          {
+            "caseId": "triage-synonym",
+            "name": "A charge described indirectly",
+            "passed": true,
+            "expected": {
+              "route": "billing"
+            },
+            "actual": {
+              "message": "I was charged twice for the same order.",
+              "email": "sample@example.invalid",
+              "validated": true,
+              "route": "billing",
+              "needsReview": false,
+              "reason": "Matched the declared deterministic vocabulary.",
+              "draft": "Thank you for contacting us. Your request is ready for the billing team to review.",
+              "citations": [],
+              "effectsSuppressed": true
+            },
+            "runId": "cli-b000506a-b0c6-4ba9-838f-cf41d8fc5abc",
+            "error": null
+          },
+          {
+            "caseId": "triage-technical",
+            "name": "Technical failure",
+            "passed": true,
+            "expected": {
+              "route": "technical"
+            },
+            "actual": {
+              "message": "The page shows an error when I open the dashboard.",
+              "email": "sample@example.invalid",
+              "validated": true,
+              "route": "technical",
+              "needsReview": false,
+              "reason": "Matched the declared deterministic vocabulary.",
+              "draft": "Thank you for contacting us. Your request is ready for the technical team to review.",
+              "citations": [],
+              "effectsSuppressed": true
+            },
+            "runId": "cli-22339aa4-3ffa-4b55-8995-09846d9dc7ae",
+            "error": null
+          },
+          {
+            "caseId": "triage-unknown",
+            "name": "Unsupported request",
+            "passed": false,
+            "expected": {
+              "route": "specialist"
+            },
+            "actual": {
+              "message": "Can you coordinate a custom international logistics contract?",
+              "email": "sample@example.invalid",
+              "validated": true,
+              "route": "review",
+              "needsReview": true,
+              "reason": "No unique supported route; a person must clarify the request.",
+              "draft": "Thank you for the request. A person will review the details and clarify the next step.",
+              "citations": [],
+              "effectsSuppressed": true
+            },
+            "runId": "cli-0d70de80-a2b9-4f7e-8cef-f8ec12b2785b",
+            "error": null
+          }
+        ],
+        "passed": 3,
+        "total": 4,
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "costUsd": 0,
+          "model": null,
+          "latencyMs": 3.237700000000018
+        },
+        "workflowId": "987ee017-c61a-44af-86a1-f35a66f51c8e",
+        "workflowRevision": 1,
+        "caseSetHash": "175c92cd82a20cbc1d8e854cbe2bddc3cdd1cc498721ef8e7f234e4dca9cba6e",
+        "rubricVersion": "2.0",
+        "evaluatorVersion": "expected-fields-2.0",
+        "effects": "suppressed",
+        "mode": "local"
+      }
+    },
+    {
+      "id": "knowledge-support",
+      "validated": true,
+      "expectedTestExit": 0,
+      "actualTestExit": 0,
+      "result": {
+        "candidateId": "enhanced-rules",
+        "name": "Keyword retrieval",
+        "cases": [
+          {
+            "caseId": "support-return",
+            "name": "Return policy",
+            "passed": true,
+            "expected": {
+              "citations": ["kb-returns"],
+              "supported": true
+            },
+            "actual": {
+              "message": "What is your returns policy?",
+              "email": "sample@example.invalid",
+              "validated": true,
+              "citations": ["kb-returns"],
+              "supported": true,
+              "sources": [
+                {
+                  "id": "kb-returns",
+                  "title": "Returns",
+                  "text": "Unused products may be returned within 30 days of delivery. Start a return in the order portal. A receipt is required."
+                }
+              ],
+              "draft": "Unused products may be returned within 30 days of delivery. Start a return in the order portal. A receipt is required.",
+              "effectsSuppressed": true
+            },
+            "runId": "cli-e51cefb9-fd25-4ca5-969e-0b2edcafb7c9",
+            "error": null
+          },
+          {
+            "caseId": "support-synonym",
+            "name": "Password phrasing",
+            "passed": true,
+            "expected": {
+              "citations": ["kb-password"],
+              "supported": true
+            },
+            "actual": {
+              "message": "I am locked out of my account.",
+              "email": "sample@example.invalid",
+              "validated": true,
+              "citations": ["kb-password"],
+              "supported": true,
+              "sources": [
+                {
+                  "id": "kb-password",
+                  "title": "Password reset",
+                  "text": "Use Forgot password on the sign-in page. Reset links expire after 30 minutes. Support never needs your password."
+                }
+              ],
+              "draft": "Use Forgot password on the sign-in page. Reset links expire after 30 minutes. Support never needs your password.",
+              "effectsSuppressed": true
+            },
+            "runId": "cli-70a8d6d0-5dbb-405b-84e2-95fc9d796238",
+            "error": null
+          },
+          {
+            "caseId": "support-unknown",
+            "name": "No source available",
+            "passed": true,
+            "expected": {
+              "citations": [],
+              "supported": false
+            },
+            "actual": {
+              "message": "What is the enterprise uptime guarantee?",
+              "email": "sample@example.invalid",
+              "validated": true,
+              "citations": [],
+              "supported": false,
+              "sources": [],
+              "draft": "I do not have a source for that answer. A person will review your question.",
+              "effectsSuppressed": true
+            },
+            "runId": "cli-50d46244-b459-4146-bf6d-3eb8d50515f8",
+            "error": null
+          }
+        ],
+        "passed": 3,
+        "total": 3,
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "costUsd": 0,
+          "model": null,
+          "latencyMs": 2.6399000000000115
+        },
+        "workflowId": "a45e7071-acc0-4d07-a4d4-aa08f552b175",
+        "workflowRevision": 1,
+        "caseSetHash": "145a9a1e868b21e45896a0fbda833d5a8bf0bd957f1bc368db6d0adb49224605",
+        "rubricVersion": "2.0",
+        "evaluatorVersion": "expected-fields-2.0",
+        "effects": "suppressed",
+        "mode": "local"
+      }
+    }
+  ]
+}

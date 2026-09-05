@@ -55,3 +55,11 @@ Thumbs.db
 
 # Phase 3 evidence — ignore curl/run logs, keep trace JSONs
 phase-3/scripts/*.log
+
+# Local execution and verification artifacts
+work/
+playwright-report/
+test-results/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

@@ -1,0 +1,573 @@
+{
+  "format": "promethean-workflow",
+  "version": "2.0",
+  "exportedAt": "2026-09-05T05:02:54.301Z",
+  "workflow": {
+    "id": "a45e7071-acc0-4d07-a4d4-aa08f552b175",
+    "name": "Answer with source evidence",
+    "description": "Retrieve a small supplied knowledge base, draft a cited answer, and require human review.",
+    "revision": 1,
+    "schemaVersion": "2.0",
+    "rubricVersion": "2.0",
+    "exampleId": "knowledge-support",
+    "status": "draft",
+    "createdAt": "2026-09-05T04:52:25.121Z",
+    "updatedAt": "2026-09-05T04:52:25.121Z",
+    "brief": {
+      "goal": "Retrieve a small supplied knowledge base, draft a cited answer, and require human review.",
+      "inputs": "A synthetic support question and email.",
+      "outputs": "A proposed answer and reviewed local outbox record",
+      "volume": "Manual example runs; no schedule is configured",
+      "constraints": [
+        "Do not execute arbitrary code",
+        "Local demonstration data only",
+        "Human approval before the local outbox",
+        "No external delivery"
+      ],
+      "successCriteria": [
+        "Use the correct route or escalate uncertainty",
+        "Do not deliver without an approval"
+      ],
+      "unknowns": [
+        "Production data distribution and operational error tolerance have not been measured"
+      ]
+    },
+    "decision": {
+      "recommendation": "Start with the deterministic candidate and compare the shared test cases.",
+      "rationale": "The curated cases make the tradeoff inspectable. Escalate complexity only when measured results justify it.",
+      "candidateId": "enhanced-rules",
+      "evidenceIds": [
+        "rubric-v2",
+        "support-corpus",
+        "common-grader"
+      ],
+      "status": "proposed",
+      "questions": []
+    },
+    "candidates": [
+      {
+        "id": "rules",
+        "name": "Simple rules",
+        "archetype": "rules",
+        "summary": "Exact policy-title matching.",
+        "tradeoffs": [
+          "Easy to inspect",
+          "Misses phrasing outside the declared rules"
+        ],
+        "evidenceIds": [
+          "support-corpus"
+        ],
+        "requiresModel": false,
+        "implementation": "rules"
+      },
+      {
+        "id": "enhanced-rules",
+        "name": "Keyword retrieval",
+        "archetype": "rules",
+        "summary": "Score policy keywords and return a cited extract.",
+        "tradeoffs": [
+          "Still deterministic and inexpensive",
+          "Coverage is limited to the curated vocabulary"
+        ],
+        "evidenceIds": [
+          "support-corpus"
+        ],
+        "requiresModel": false,
+        "implementation": "enhanced-rules"
+      },
+      {
+        "id": "model",
+        "name": "Bounded model workflow",
+        "archetype": "tool-agent",
+        "summary": "Retrieve policies through a typed tool and draft only from supported sources.",
+        "tradeoffs": [
+          "Handles varied language",
+          "Adds measured cost and variable output"
+        ],
+        "evidenceIds": [
+          "support-corpus"
+        ],
+        "requiresModel": true,
+        "implementation": "model"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "validate",
+        "label": "Check the request",
+        "description": "Require a message and syntactically valid recipient email.",
+        "kind": "validate",
+        "archetype": "rules",
+        "config": {
+          "requiredFields": [
+            "message",
+            "email"
+          ],
+          "maxLength": 8000
+        },
+        "provenance": {
+          "requirement": "Require a message and syntactically valid recipient email.",
+          "rationale": "A bounded validate step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "support-corpus"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "support-return",
+            "support-synonym",
+            "support-unknown"
+          ],
+          "status": "untested"
+        }
+      },
+      {
+        "id": "retrieve",
+        "label": "Find supporting policy",
+        "description": "Retrieve only the supplied policies; unknown answers require review.",
+        "kind": "retrieve",
+        "archetype": "tool-agent",
+        "config": {
+          "corpusId": "support-v1"
+        },
+        "provenance": {
+          "requirement": "Retrieve only the supplied policies; unknown answers require review.",
+          "rationale": "A bounded retrieve step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "support-corpus"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "support-return",
+            "support-synonym",
+            "support-unknown"
+          ],
+          "status": "untested"
+        }
+      },
+      {
+        "id": "draft",
+        "label": "Prepare the response",
+        "description": "Prepare a concise response and retain its supporting citations.",
+        "kind": "draft",
+        "archetype": "model-task",
+        "config": {
+          "domain": "support"
+        },
+        "provenance": {
+          "requirement": "Prepare a concise response and retain its supporting citations.",
+          "rationale": "A bounded draft step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "support-corpus"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "support-return",
+            "support-synonym",
+            "support-unknown"
+          ],
+          "status": "untested"
+        }
+      },
+      {
+        "id": "approval",
+        "label": "Review before delivery",
+        "description": "A person must approve this exact revision and prepared action.",
+        "kind": "approval",
+        "archetype": "assistant",
+        "config": {
+          "action": "local-outbox"
+        },
+        "provenance": {
+          "requirement": "A person must approve this exact revision and prepared action.",
+          "rationale": "A bounded approval step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "support-corpus"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "support-return",
+            "support-synonym",
+            "support-unknown"
+          ],
+          "status": "untested"
+        }
+      },
+      {
+        "id": "outbox",
+        "label": "Write to the local outbox",
+        "description": "Write one local demonstration message. No email is sent.",
+        "kind": "outbox",
+        "archetype": "rules",
+        "config": {
+          "adapter": "local-outbox"
+        },
+        "provenance": {
+          "requirement": "Write one local demonstration message. No email is sent.",
+          "rationale": "A bounded outbox step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "support-corpus"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "support-return",
+            "support-synonym",
+            "support-unknown"
+          ],
+          "status": "untested"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "validate-retrieve",
+        "source": "validate",
+        "target": "retrieve"
+      },
+      {
+        "id": "retrieve-draft",
+        "source": "retrieve",
+        "target": "draft"
+      },
+      {
+        "id": "draft-approval",
+        "source": "draft",
+        "target": "approval"
+      },
+      {
+        "id": "approval-outbox",
+        "source": "approval",
+        "target": "outbox"
+      }
+    ],
+    "tests": [
+      {
+        "id": "support-return",
+        "name": "Return policy",
+        "input": {
+          "message": "What is your returns policy?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "citations": [
+            "kb-returns"
+          ],
+          "supported": true
+        },
+        "description": "A known policy question with direct words."
+      },
+      {
+        "id": "support-synonym",
+        "name": "Password phrasing",
+        "input": {
+          "message": "I am locked out of my account.",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "citations": [
+            "kb-password"
+          ],
+          "supported": true
+        },
+        "description": "Keyword retrieval recognizes a synonym beyond a title match."
+      },
+      {
+        "id": "support-unknown",
+        "name": "No source available",
+        "input": {
+          "message": "What is the enterprise uptime guarantee?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "citations": [],
+          "supported": false
+        },
+        "description": "The answer is absent from the corpus; it must be escalated."
+      }
+    ],
+    "sampleInput": {
+      "message": "How do I return an unopened product?",
+      "email": "sample@example.invalid"
+    },
+    "designSource": "local-rubric",
+    "model": null
+  },
+  "evidence": [
+    {
+      "id": "rubric-v2",
+      "title": "The least complex sufficient solution",
+      "source": "docs/architecture/canonical-rubric.md",
+      "excerpt": "A process change or deterministic rule is a valid outcome. Capability and permission are separate. Use task evidence before increasing complexity.",
+      "category": "methodology",
+      "revision": "2.0",
+      "verified": true
+    },
+    {
+      "id": "support-corpus",
+      "title": "Curated support corpus",
+      "source": "packages/core/src/catalog.ts#supportCorpus",
+      "excerpt": "A small synthetic product policy corpus supports cited answers and refusal when the answer is absent. It is an example, not a company policy source.",
+      "category": "example",
+      "revision": "2.0",
+      "verified": true
+    },
+    {
+      "id": "common-grader",
+      "title": "Independent field-based acceptance grader",
+      "source": "packages/core/src/execution.ts#evaluateExpected",
+      "excerpt": "Every candidate receives the same case set and expected fields. The deterministic grader compares expected subsets, not model confidence or self-assigned capability labels.",
+      "category": "evaluation",
+      "revision": "2.0",
+      "verified": true
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "740c0822-dc4a-48bd-bf30-e09225ff3b4c",
+      "workflowId": "a45e7071-acc0-4d07-a4d4-aa08f552b175",
+      "workflowRevision": 1,
+      "createdAt": "2026-09-05T04:52:25.124Z",
+      "mode": "live",
+      "results": [
+        {
+          "candidateId": "rules",
+          "name": "Simple rules",
+          "cases": [
+            {
+              "caseId": "support-return",
+              "name": "Return policy",
+              "passed": true,
+              "expected": {
+                "citations": [
+                  "kb-returns"
+                ],
+                "supported": true
+              },
+              "actual": {
+                "citations": [
+                  "kb-returns"
+                ],
+                "supported": true
+              },
+              "runId": "7b0c1b34-e2fc-448a-b4da-8b323fc01edb",
+              "error": null
+            },
+            {
+              "caseId": "support-synonym",
+              "name": "Password phrasing",
+              "passed": false,
+              "expected": {
+                "citations": [
+                  "kb-password"
+                ],
+                "supported": true
+              },
+              "actual": {
+                "citations": [],
+                "supported": false
+              },
+              "runId": "0ead15df-9861-46dd-adc5-0ffa07182be4",
+              "error": null
+            },
+            {
+              "caseId": "support-unknown",
+              "name": "No source available",
+              "passed": true,
+              "expected": {
+                "citations": [],
+                "supported": false
+              },
+              "actual": {
+                "citations": [],
+                "supported": false
+              },
+              "runId": "47ac58a8-b54c-493e-a9ae-ca22aec53923",
+              "error": null
+            }
+          ],
+          "passed": 2,
+          "total": 3,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 18.1775000000016
+          }
+        },
+        {
+          "candidateId": "enhanced-rules",
+          "name": "Keyword retrieval",
+          "cases": [
+            {
+              "caseId": "support-return",
+              "name": "Return policy",
+              "passed": true,
+              "expected": {
+                "citations": [
+                  "kb-returns"
+                ],
+                "supported": true
+              },
+              "actual": {
+                "citations": [
+                  "kb-returns"
+                ],
+                "supported": true
+              },
+              "runId": "788ce62f-c587-458e-9a58-62b82e93ee06",
+              "error": null
+            },
+            {
+              "caseId": "support-synonym",
+              "name": "Password phrasing",
+              "passed": true,
+              "expected": {
+                "citations": [
+                  "kb-password"
+                ],
+                "supported": true
+              },
+              "actual": {
+                "citations": [
+                  "kb-password"
+                ],
+                "supported": true
+              },
+              "runId": "58b00ed8-9ca9-408a-9870-c8afc3849bd4",
+              "error": null
+            },
+            {
+              "caseId": "support-unknown",
+              "name": "No source available",
+              "passed": true,
+              "expected": {
+                "citations": [],
+                "supported": false
+              },
+              "actual": {
+                "citations": [],
+                "supported": false
+              },
+              "runId": "457918b2-6218-4a68-915a-32dfa02fe461",
+              "error": null
+            }
+          ],
+          "passed": 3,
+          "total": 3,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 21.826600000000326
+          }
+        },
+        {
+          "candidateId": "model",
+          "name": "Bounded model workflow",
+          "cases": [
+            {
+              "caseId": "support-return",
+              "name": "Return policy",
+              "passed": true,
+              "expected": {
+                "citations": [
+                  "kb-returns"
+                ],
+                "supported": true
+              },
+              "actual": {
+                "citations": [
+                  "kb-returns"
+                ],
+                "supported": true
+              },
+              "runId": "b6e4e617-ccb2-4d9b-9b7d-faff4c118700",
+              "error": null
+            },
+            {
+              "caseId": "support-synonym",
+              "name": "Password phrasing",
+              "passed": true,
+              "expected": {
+                "citations": [
+                  "kb-password"
+                ],
+                "supported": true
+              },
+              "actual": {
+                "citations": [
+                  "kb-password"
+                ],
+                "supported": true
+              },
+              "runId": "9d333627-1ea5-4bc7-8a94-909a384bbc07",
+              "error": null
+            },
+            {
+              "caseId": "support-unknown",
+              "name": "No source available",
+              "passed": true,
+              "expected": {
+                "citations": [],
+                "supported": false
+              },
+              "actual": {
+                "citations": [],
+                "supported": false
+              },
+              "runId": "8c02f8db-5e16-47d1-8452-f4149cf1b322",
+              "error": null
+            }
+          ],
+          "passed": 3,
+          "total": 3,
+          "usage": {
+            "inputTokens": 2532,
+            "outputTokens": 420,
+            "costUsd": 0.0010103999999999998,
+            "model": "gpt-5.6-luna",
+            "latencyMs": 14108.130900000007
+          }
+        }
+      ],
+      "recommendation": "Keyword retrieval meets all 3 declared cases. Prefer the least complex passing candidate; this small fixture set does not establish production accuracy. Constraints retained: Do not execute arbitrary code Local demonstration data only Human approval before the local outbox No external delivery",
+      "rubricVersion": "2.0",
+      "evaluatorVersion": "expected-fields-2.0",
+      "caseSetHash": "145a9a1e868b21e45896a0fbda833d5a8bf0bd957f1bc368db6d0adb49224605"
+    }
+  ],
+  "requirements": [
+    "Node.js 24+",
+    "Promethean 2.0 shared runtime or CLI",
+    "Optional live mode: OPENAI_API_KEY or OPENAI_API_KEY_FILE, Luna/Terra access, and remaining usage allowance",
+    "local-outbox adapter only; external delivery is not implemented"
+  ],
+  "runbook": "Validate the package checksum and graph before importing. Run deterministic tests with the Promethean CLI; comparison suppresses all effects. Review the brief, provenance, and constraints. Live execution is optional and uses ordinary budget, approval, and idempotency checks. Included inputs are verified synthetic fixtures. Workflow descriptions and configuration are part of the exported definition; review them before sharing.",
+  "checksum": "adf777f7eccf438d3059ffbb772b747c02e11c91c25065509ddb51be16500ee1"
+}

@@ -1,0 +1,7 @@
+# Keep maintained source and formatting checks consistent across Windows and Linux.
+* text=auto eol=lf
+
+# These alpha files were committed with CRLF; retain their original Git blobs.
+archive/alpha/attached_assets/Agentic_Systems_Studio_1775177364817.txt -text
+archive/alpha/phase-3/evidence/baseline_comparison_crm.csv -text
+archive/alpha/phase-3/evidence/evaluation_results.csv -text

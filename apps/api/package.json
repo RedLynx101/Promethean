@@ -1,0 +1,22 @@
+{
+  "name": "@promethean/api",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/app.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@promethean/core": "workspace:*",
+    "@promethean/agents": "workspace:*",
+    "@promethean/runtime": "workspace:*",
+    "express": "^5.1.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "tsx": "^4.20.0"
+  }
+}

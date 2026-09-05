@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Promethean'
+  short_description: 'Find and test the simplest reliable workflow'
+  default_prompt: 'Use $promethean to diagnose this workflow and recommend the minimum viable solution with evidence and acceptance tests.'

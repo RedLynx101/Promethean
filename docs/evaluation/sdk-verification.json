@@ -1,0 +1,73 @@
+{
+  "startedAt": "2026-09-05T04:37:47.178Z",
+  "completedAt": "2026-09-05T04:38:05.392Z",
+  "passed": true,
+  "model": "gpt-5.6-luna",
+  "before": {
+    "limitUsd": 5,
+    "spentUsd": 0,
+    "reservedUsd": 0,
+    "remainingUsd": 5
+  },
+  "after": {
+    "limitUsd": 5,
+    "spentUsd": 0.0014157999999999998,
+    "reservedUsd": 0,
+    "remainingUsd": 4.9985842
+  },
+  "outboxEffects": 0,
+  "results": [
+    {
+      "check": "structured-diagnosis",
+      "passed": true,
+      "workflowId": "ff5d8709-04de-4b52-b1a9-0745ce8700e7",
+      "model": "gpt-5.6-luna"
+    },
+    {
+      "check": "inbound-triage",
+      "passed": true,
+      "runId": "3c7bca86-ddb3-4af6-a914-9d917a03c5ec",
+      "workflowId": "736c363e-bb6c-484a-8560-80bea9bdec64",
+      "status": "awaiting-approval",
+      "usage": {
+        "inputTokens": 323,
+        "outputTokens": 64,
+        "costUsd": 0.00014140000000000002,
+        "model": "gpt-5.6-luna",
+        "latencyMs": 2930.4894000000004
+      },
+      "expected": {
+        "route": "billing"
+      },
+      "actual": {
+        "route": "billing",
+        "citations": [],
+        "supported": false
+      },
+      "error": null
+    },
+    {
+      "check": "knowledge-support",
+      "passed": true,
+      "runId": "44f99bfc-5eb4-4693-a8c3-e1bfe30e0530",
+      "workflowId": "3e86f9de-3f0f-4a50-9ec4-744b56c3ee8e",
+      "status": "awaiting-approval",
+      "usage": {
+        "inputTokens": 856,
+        "outputTokens": 154,
+        "costUsd": 0.000356,
+        "model": "gpt-5.6-luna",
+        "latencyMs": 6952.487500000003
+      },
+      "expected": {
+        "citations": ["kb-returns"],
+        "supported": true
+      },
+      "actual": {
+        "citations": ["kb-returns"],
+        "supported": true
+      },
+      "error": null
+    }
+  ]
+}

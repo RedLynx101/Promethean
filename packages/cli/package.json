@@ -1,0 +1,15 @@
+{
+  "name": "@promethean/cli",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local diagnosis, evidence, validation and portable workflow tests.",
+  "exports": "./src/cli.ts",
+  "bin": {
+    "promethean": "./bin/promethean.mjs"
+  },
+  "dependencies": {
+    "@promethean/core": "workspace:*",
+    "tsx": "^4.21.0"
+  }
+}

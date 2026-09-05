@@ -1,0 +1,14 @@
+# A short product walkthrough
+
+Start `pnpm dev` and open http://127.0.0.1:4317. Local mode needs no model key. Everything below uses synthetic data.
+
+1. **Diagnose.** Describe CSV validation using `amount` and `region`. The brief offers a bounded starter design and asks for missing routing rules and acceptance cases. It has no fake sample results. Edit the structured brief and define cases in Tests when those decisions are known. Unsupported processes receive a clarification brief rather than an invented executable workflow.
+2. **Compare.** Open Library → Clean and route a CSV → Use workflow. In Tests, compare approaches. Strict rules reject `$25` with extra whitespace; normalized rules handle it. Both reject an invalid amount. Inspect actual outputs, measured latency, and zero model usage.
+3. **Inspect.** In Design, select “Validate and normalize rows.” Read the requirement, source evidence, alternatives, rubric and linked results. Switch to Graph; selecting the same node reveals the same provenance. Moving a node changes only its visual position.
+4. **Learn from failure.** Edit “Check the input” and set configuration `maxLength` to `5`. Review the before/after change and save a revision. Run a test; the actual validation step fails. Replay the saved trace and advance through its events. Replay issues no requests that execute a workflow.
+5. **Correct.** Restore `maxLength` to `16000` in a new revision. In Runs, retry the failed run. The new run references the original; the failed trace is preserved. Rerun the comparison to replace stale proof. Version history can restore a prior design as another new draft revision.
+6. **Approve.** Open the request-triage example and run the default expanded-rules candidate. Inspect the prepared draft and recipient. Deny the action to see a terminated run, or approve it to create one local outbox entry. No email is sent. A revised action requires fresh approval.
+7. **Know when to stop.** Compare the triage candidates. Its specialist-route case exceeds the installed taxonomy, so neither candidate qualifies. The app retains the failure rather than recommending a partially passing design as complete.
+8. **Export.** Export an unchanged synthetic example. Use the CLI to validate the package and execute its deterministic tests from a clean directory. Custom fixtures and raw private runs are omitted by default; inspect any prose you supplied before sharing. [Portable package instructions](workflow-packages.md).
+
+With an explicit server-side key, select the live model candidate to exercise structured classification or tool-backed support retrieval and drafting. The studio displays measured usage and the remaining allowance. Live outputs are variable, and the small synthetic corpus is not a substitute for your organization's policies.

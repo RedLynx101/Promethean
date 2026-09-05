@@ -1,0 +1,700 @@
+{
+  "recordedAt": "2026-09-05T05:11:00.068Z",
+  "version": "heldout-v1",
+  "caseFileSha256": "e1ffeda80bc064fcf21f4811ba8ee87e6900b6fba694866f57fcea826219ecc7",
+  "independentSyntheticCases": true,
+  "noImplementationTuning": true,
+  "before": {
+    "limitUsd": 5,
+    "spentUsd": 0.0032627999999999997,
+    "reservedUsd": 0,
+    "remainingUsd": 4.9967372
+  },
+  "after": {
+    "limitUsd": 5,
+    "spentUsd": 0.005300599999999999,
+    "reservedUsd": 0,
+    "remainingUsd": 4.9946994
+  },
+  "outboxEffects": 0,
+  "results": [
+    {
+      "exampleId": "inbound-triage",
+      "comparison": {
+        "id": "ddf09c87-f6e2-43c5-9283-572d770f42b1",
+        "workflowId": "1ce6f362-c513-447d-94e3-8b58b42d19d8",
+        "workflowRevision": 1,
+        "createdAt": "2026-09-05T05:10:29.780Z",
+        "mode": "live",
+        "results": [
+          {
+            "candidateId": "rules",
+            "name": "Simple rules",
+            "cases": [
+              {
+                "caseId": "heldout-triage-billing-01",
+                "name": "Duplicate charge",
+                "passed": false,
+                "expected": {
+                  "route": "billing"
+                },
+                "actual": {
+                  "message": "I bought one subscription yesterday, but my card now shows two completed charges for the same amount. Can you check the extra payment?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "review",
+                  "needsReview": true,
+                  "reason": "No unique supported route; a person must clarify the request.",
+                  "draft": "Thank you for the request. A person will review the details and clarify the next step.",
+                  "citations": [],
+                  "effectsSuppressed": true
+                },
+                "runId": "4c4eedfc-3f4d-4532-bcfc-08148275835b",
+                "error": null
+              },
+              {
+                "caseId": "heldout-triage-technical-01",
+                "name": "Export failure",
+                "passed": false,
+                "expected": {
+                  "route": "technical"
+                },
+                "actual": {
+                  "message": "Every time I choose Download CSV, the page turns blank and no file appears. Signing out and trying again did not help. Could someone help me get the export working?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "review",
+                  "needsReview": true,
+                  "reason": "No unique supported route; a person must clarify the request.",
+                  "draft": "Thank you for the request. A person will review the details and clarify the next step.",
+                  "citations": [],
+                  "effectsSuppressed": true
+                },
+                "runId": "6e51a33e-4b09-43ba-a910-513d69c3d96a",
+                "error": null
+              },
+              {
+                "caseId": "heldout-triage-sales-01",
+                "name": "Team purchase enquiry",
+                "passed": false,
+                "expected": {
+                  "route": "sales"
+                },
+                "actual": {
+                  "message": "Our team is comparing tools for about forty colleagues. Could we see a walkthrough and get a quote before deciding whether to sign up?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "review",
+                  "needsReview": true,
+                  "reason": "No unique supported route; a person must clarify the request.",
+                  "draft": "Thank you for the request. A person will review the details and clarify the next step.",
+                  "citations": [],
+                  "effectsSuppressed": true
+                },
+                "runId": "544ad1ca-96a6-44db-b19a-67f2165d5279",
+                "error": null
+              },
+              {
+                "caseId": "heldout-triage-review-01",
+                "name": "Unspecified account request",
+                "passed": true,
+                "expected": {
+                  "route": "review"
+                },
+                "actual": {
+                  "message": "Something about my account needs sorting out, but I am not sure who handles it. Can someone take a look and help me figure out the next step?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "review",
+                  "needsReview": true,
+                  "reason": "No unique supported route; a person must clarify the request.",
+                  "draft": "Thank you for the request. A person will review the details and clarify the next step.",
+                  "citations": [],
+                  "effectsSuppressed": true
+                },
+                "runId": "5a62a529-50f5-419b-8b13-c04eb5148eb4",
+                "error": null
+              }
+            ],
+            "passed": 1,
+            "total": 4,
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "costUsd": 0,
+              "model": null,
+              "latencyMs": 15.776700000001256
+            }
+          },
+          {
+            "candidateId": "enhanced-rules",
+            "name": "Expanded rules",
+            "cases": [
+              {
+                "caseId": "heldout-triage-billing-01",
+                "name": "Duplicate charge",
+                "passed": false,
+                "expected": {
+                  "route": "billing"
+                },
+                "actual": {
+                  "message": "I bought one subscription yesterday, but my card now shows two completed charges for the same amount. Can you check the extra payment?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "review",
+                  "needsReview": true,
+                  "reason": "No unique supported route; a person must clarify the request.",
+                  "draft": "Thank you for the request. A person will review the details and clarify the next step.",
+                  "citations": [],
+                  "effectsSuppressed": true
+                },
+                "runId": "aca35026-2c35-46a9-9947-ae01ded82779",
+                "error": null
+              },
+              {
+                "caseId": "heldout-triage-technical-01",
+                "name": "Export failure",
+                "passed": false,
+                "expected": {
+                  "route": "technical"
+                },
+                "actual": {
+                  "message": "Every time I choose Download CSV, the page turns blank and no file appears. Signing out and trying again did not help. Could someone help me get the export working?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "review",
+                  "needsReview": true,
+                  "reason": "No unique supported route; a person must clarify the request.",
+                  "draft": "Thank you for the request. A person will review the details and clarify the next step.",
+                  "citations": [],
+                  "effectsSuppressed": true
+                },
+                "runId": "dff66aee-56d9-40e8-ae50-8203c7aa7eef",
+                "error": null
+              },
+              {
+                "caseId": "heldout-triage-sales-01",
+                "name": "Team purchase enquiry",
+                "passed": true,
+                "expected": {
+                  "route": "sales"
+                },
+                "actual": {
+                  "message": "Our team is comparing tools for about forty colleagues. Could we see a walkthrough and get a quote before deciding whether to sign up?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "sales",
+                  "needsReview": false,
+                  "reason": "Matched the declared deterministic vocabulary.",
+                  "draft": "Thank you for contacting us. Your request is ready for the sales team to review.",
+                  "citations": [],
+                  "effectsSuppressed": true
+                },
+                "runId": "45492ac7-dbd1-4297-9885-0252b540f2d5",
+                "error": null
+              },
+              {
+                "caseId": "heldout-triage-review-01",
+                "name": "Unspecified account request",
+                "passed": true,
+                "expected": {
+                  "route": "review"
+                },
+                "actual": {
+                  "message": "Something about my account needs sorting out, but I am not sure who handles it. Can someone take a look and help me figure out the next step?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "review",
+                  "needsReview": true,
+                  "reason": "No unique supported route; a person must clarify the request.",
+                  "draft": "Thank you for the request. A person will review the details and clarify the next step.",
+                  "citations": [],
+                  "effectsSuppressed": true
+                },
+                "runId": "250107df-f342-4cd4-8a3b-0840b2b3c05a",
+                "error": null
+              }
+            ],
+            "passed": 2,
+            "total": 4,
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "costUsd": 0,
+              "model": null,
+              "latencyMs": 14.63630000000012
+            }
+          },
+          {
+            "candidateId": "model",
+            "name": "Bounded model workflow",
+            "cases": [
+              {
+                "caseId": "heldout-triage-billing-01",
+                "name": "Duplicate charge",
+                "passed": true,
+                "expected": {
+                  "route": "billing"
+                },
+                "actual": {
+                  "message": "I bought one subscription yesterday, but my card now shows two completed charges for the same amount. Can you check the extra payment?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "billing",
+                  "needsReview": false,
+                  "reason": "The request concerns a duplicate subscription charge and payment investigation.",
+                  "draft": "Acknowledged: your request about a possible duplicate subscription charge has been assigned to the billing route for human review.",
+                  "citations": [],
+                  "supported": false,
+                  "effectsSuppressed": true
+                },
+                "runId": "b73489a0-85d1-4e76-8a1a-7f9b014b8170",
+                "error": null
+              },
+              {
+                "caseId": "heldout-triage-technical-01",
+                "name": "Export failure",
+                "passed": true,
+                "expected": {
+                  "route": "technical"
+                },
+                "actual": {
+                  "message": "Every time I choose Download CSV, the page turns blank and no file appears. Signing out and trying again did not help. Could someone help me get the export working?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "technical",
+                  "needsReview": false,
+                  "reason": "The request reports a recurring page failure when downloading a CSV export and asks for troubleshooting.",
+                  "draft": "Acknowledged. This request is assigned to the technical route for human review.",
+                  "citations": [],
+                  "supported": false,
+                  "effectsSuppressed": true
+                },
+                "runId": "fbf1adac-f9f6-427e-a070-d73a7d7300fd",
+                "error": null
+              },
+              {
+                "caseId": "heldout-triage-sales-01",
+                "name": "Team purchase enquiry",
+                "passed": true,
+                "expected": {
+                  "route": "sales"
+                },
+                "actual": {
+                  "message": "Our team is comparing tools for about forty colleagues. Could we see a walkthrough and get a quote before deciding whether to sign up?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "sales",
+                  "needsReview": false,
+                  "reason": "The request asks for a product walkthrough and quote for a prospective team purchase.",
+                  "draft": "Acknowledged. This request is assigned to the sales route for human review.",
+                  "citations": [],
+                  "supported": false,
+                  "effectsSuppressed": true
+                },
+                "runId": "0e7d512b-a967-4f17-9bfe-29a78f3e90a2",
+                "error": null
+              },
+              {
+                "caseId": "heldout-triage-review-01",
+                "name": "Unspecified account request",
+                "passed": true,
+                "expected": {
+                  "route": "review"
+                },
+                "actual": {
+                  "message": "Something about my account needs sorting out, but I am not sure who handles it. Can someone take a look and help me figure out the next step?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "route": "review",
+                  "needsReview": true,
+                  "reason": "The request is too ambiguous to determine whether it concerns billing, technical support, or sales.",
+                  "draft": "Acknowledged. Your request has been assigned to the review route for human assessment of the appropriate next step.",
+                  "citations": [],
+                  "supported": false,
+                  "effectsSuppressed": true
+                },
+                "runId": "1a2da521-72ef-4231-811e-dc1064071642",
+                "error": null
+              }
+            ],
+            "passed": 4,
+            "total": 4,
+            "usage": {
+              "inputTokens": 1458,
+              "outputTokens": 365,
+              "costUsd": 0.0007296000000000001,
+              "model": "gpt-5.6-luna",
+              "latencyMs": 13381.068999999998
+            }
+          }
+        ],
+        "recommendation": "Bounded model workflow meets all 4 declared cases. Prefer the least complex passing candidate; this small fixture set does not establish production accuracy. Constraints retained: Do not execute arbitrary code Local demonstration data only Human approval before the local outbox No external delivery",
+        "rubricVersion": "2.0",
+        "evaluatorVersion": "expected-fields-2.0",
+        "caseSetHash": "ee218fdc64b8fa98236e1456415016011bf1d04f59c4c2f746096e80297c979c"
+      }
+    },
+    {
+      "exampleId": "knowledge-support",
+      "comparison": {
+        "id": "b59bd37e-3a9e-49be-9989-1bc9021fef21",
+        "workflowId": "6c993fd9-5d8a-4631-b87f-642b8645f627",
+        "workflowRevision": 1,
+        "createdAt": "2026-09-05T05:10:43.573Z",
+        "mode": "live",
+        "results": [
+          {
+            "candidateId": "rules",
+            "name": "Simple rules",
+            "cases": [
+              {
+                "caseId": "heldout-support-returns-01",
+                "name": "Unopened purchase paraphrase",
+                "passed": false,
+                "expected": {
+                  "citations": ["kb-returns"],
+                  "supported": true
+                },
+                "actual": {
+                  "message": "My purchase was delivered twelve days ago and is still unopened and unused. I have the receipt. Am I still in time to send it back, and where do I begin?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": [],
+                  "supported": false,
+                  "sources": [],
+                  "draft": "I do not have a source for that answer. A person will review your question.",
+                  "effectsSuppressed": true
+                },
+                "runId": "5bd6c3aa-5b5c-4e75-a379-84b00535365c",
+                "error": null
+              },
+              {
+                "caseId": "heldout-support-shipping-01",
+                "name": "Shipping duration and tracking",
+                "passed": true,
+                "expected": {
+                  "citations": ["kb-shipping"],
+                  "supported": true
+                },
+                "actual": {
+                  "message": "How many business days does standard shipping take, and where can I find tracking after the order has been dispatched?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": ["kb-shipping"],
+                  "supported": true,
+                  "sources": [
+                    {
+                      "id": "kb-shipping",
+                      "title": "Shipping",
+                      "text": "Standard shipping takes 3 to 5 business days. Tracking appears in the order portal after dispatch."
+                    }
+                  ],
+                  "draft": "Standard shipping takes 3 to 5 business days. Tracking appears in the order portal after dispatch.",
+                  "effectsSuppressed": true
+                },
+                "runId": "4e0a56dc-afe8-436f-b71a-a599615d4630",
+                "error": null
+              },
+              {
+                "caseId": "heldout-support-password-01",
+                "name": "Password reset instructions and expiry",
+                "passed": true,
+                "expected": {
+                  "citations": ["kb-password"],
+                  "supported": true
+                },
+                "actual": {
+                  "message": "Where do I request a password reset, and how many minutes is the reset link valid?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": ["kb-password"],
+                  "supported": true,
+                  "sources": [
+                    {
+                      "id": "kb-password",
+                      "title": "Password reset",
+                      "text": "Use Forgot password on the sign-in page. Reset links expire after 30 minutes. Support never needs your password."
+                    }
+                  ],
+                  "draft": "Use Forgot password on the sign-in page. Reset links expire after 30 minutes. Support never needs your password.",
+                  "effectsSuppressed": true
+                },
+                "runId": "7d543da6-4d5b-4ab0-a95e-e43ebd09fe86",
+                "error": null
+              },
+              {
+                "caseId": "heldout-support-absent-01",
+                "name": "Store opening hours absent",
+                "passed": true,
+                "expected": {
+                  "citations": [],
+                  "supported": false
+                },
+                "actual": {
+                  "message": "What time does your physical store open on Saturdays?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": [],
+                  "supported": false,
+                  "sources": [],
+                  "draft": "I do not have a source for that answer. A person will review your question.",
+                  "effectsSuppressed": true
+                },
+                "runId": "29c4510b-3546-44e8-a797-f2deef3d9b61",
+                "error": null
+              }
+            ],
+            "passed": 3,
+            "total": 4,
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "costUsd": 0,
+              "model": null,
+              "latencyMs": 22.417200000001685
+            }
+          },
+          {
+            "candidateId": "enhanced-rules",
+            "name": "Keyword retrieval",
+            "cases": [
+              {
+                "caseId": "heldout-support-returns-01",
+                "name": "Unopened purchase paraphrase",
+                "passed": true,
+                "expected": {
+                  "citations": ["kb-returns"],
+                  "supported": true
+                },
+                "actual": {
+                  "message": "My purchase was delivered twelve days ago and is still unopened and unused. I have the receipt. Am I still in time to send it back, and where do I begin?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": ["kb-returns"],
+                  "supported": true,
+                  "sources": [
+                    {
+                      "id": "kb-returns",
+                      "title": "Returns",
+                      "text": "Unused products may be returned within 30 days of delivery. Start a return in the order portal. A receipt is required."
+                    }
+                  ],
+                  "draft": "Unused products may be returned within 30 days of delivery. Start a return in the order portal. A receipt is required.",
+                  "effectsSuppressed": true
+                },
+                "runId": "3f141b0b-2675-4f1f-8e25-997978d13fab",
+                "error": null
+              },
+              {
+                "caseId": "heldout-support-shipping-01",
+                "name": "Shipping duration and tracking",
+                "passed": true,
+                "expected": {
+                  "citations": ["kb-shipping"],
+                  "supported": true
+                },
+                "actual": {
+                  "message": "How many business days does standard shipping take, and where can I find tracking after the order has been dispatched?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": ["kb-shipping"],
+                  "supported": true,
+                  "sources": [
+                    {
+                      "id": "kb-shipping",
+                      "title": "Shipping",
+                      "text": "Standard shipping takes 3 to 5 business days. Tracking appears in the order portal after dispatch."
+                    }
+                  ],
+                  "draft": "Standard shipping takes 3 to 5 business days. Tracking appears in the order portal after dispatch.",
+                  "effectsSuppressed": true
+                },
+                "runId": "f46fc64f-57f3-4f22-977c-6d9022c363be",
+                "error": null
+              },
+              {
+                "caseId": "heldout-support-password-01",
+                "name": "Password reset instructions and expiry",
+                "passed": true,
+                "expected": {
+                  "citations": ["kb-password"],
+                  "supported": true
+                },
+                "actual": {
+                  "message": "Where do I request a password reset, and how many minutes is the reset link valid?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": ["kb-password"],
+                  "supported": true,
+                  "sources": [
+                    {
+                      "id": "kb-password",
+                      "title": "Password reset",
+                      "text": "Use Forgot password on the sign-in page. Reset links expire after 30 minutes. Support never needs your password."
+                    }
+                  ],
+                  "draft": "Use Forgot password on the sign-in page. Reset links expire after 30 minutes. Support never needs your password.",
+                  "effectsSuppressed": true
+                },
+                "runId": "1e55ef09-88ce-4d5b-9af5-2ff9c0e4a385",
+                "error": null
+              },
+              {
+                "caseId": "heldout-support-absent-01",
+                "name": "Store opening hours absent",
+                "passed": true,
+                "expected": {
+                  "citations": [],
+                  "supported": false
+                },
+                "actual": {
+                  "message": "What time does your physical store open on Saturdays?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": [],
+                  "supported": false,
+                  "sources": [],
+                  "draft": "I do not have a source for that answer. A person will review your question.",
+                  "effectsSuppressed": true
+                },
+                "runId": "a0a53518-375a-41db-a674-6227e538e35c",
+                "error": null
+              }
+            ],
+            "passed": 4,
+            "total": 4,
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "costUsd": 0,
+              "model": null,
+              "latencyMs": 27.147299999996903
+            }
+          },
+          {
+            "candidateId": "model",
+            "name": "Bounded model workflow",
+            "cases": [
+              {
+                "caseId": "heldout-support-returns-01",
+                "name": "Unopened purchase paraphrase",
+                "passed": true,
+                "expected": {
+                  "citations": ["kb-returns"],
+                  "supported": true
+                },
+                "actual": {
+                  "message": "My purchase was delivered twelve days ago and is still unopened and unused. I have the receipt. Am I still in time to send it back, and where do I begin?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": ["kb-returns"],
+                  "supported": true,
+                  "sources": [
+                    {
+                      "id": "kb-returns",
+                      "title": "Returns",
+                      "text": "Unused products may be returned within 30 days of delivery. Start a return in the order portal. A receipt is required."
+                    }
+                  ],
+                  "draft": "Yes. Since the purchase was delivered 12 days ago and is unused, it is within the 30-day return period. Start the return in the order portal; your receipt is required. [kb-returns]",
+                  "effectsSuppressed": true
+                },
+                "runId": "605a7f1e-0d82-4c1c-916b-d3f5d8858762",
+                "error": null
+              },
+              {
+                "caseId": "heldout-support-shipping-01",
+                "name": "Shipping duration and tracking",
+                "passed": true,
+                "expected": {
+                  "citations": ["kb-shipping"],
+                  "supported": true
+                },
+                "actual": {
+                  "message": "How many business days does standard shipping take, and where can I find tracking after the order has been dispatched?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": ["kb-shipping"],
+                  "supported": true,
+                  "sources": [
+                    {
+                      "id": "kb-shipping",
+                      "title": "Shipping",
+                      "text": "Standard shipping takes 3 to 5 business days. Tracking appears in the order portal after dispatch."
+                    }
+                  ],
+                  "draft": "Standard shipping takes 3–5 business days. After dispatch, tracking is available in the order portal.",
+                  "effectsSuppressed": true
+                },
+                "runId": "a62656fd-dbb9-44e0-8a94-4b1b27544bde",
+                "error": null
+              },
+              {
+                "caseId": "heldout-support-password-01",
+                "name": "Password reset instructions and expiry",
+                "passed": true,
+                "expected": {
+                  "citations": ["kb-password"],
+                  "supported": true
+                },
+                "actual": {
+                  "message": "Where do I request a password reset, and how many minutes is the reset link valid?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": ["kb-password"],
+                  "supported": true,
+                  "sources": [
+                    {
+                      "id": "kb-password",
+                      "title": "Password reset",
+                      "text": "Use Forgot password on the sign-in page. Reset links expire after 30 minutes. Support never needs your password."
+                    }
+                  ],
+                  "draft": "Request a reset by selecting “Forgot password” on the sign-in page. The reset link is valid for 30 minutes. [kb-password]",
+                  "effectsSuppressed": true
+                },
+                "runId": "3234fe10-d9de-4128-b9de-71a750688109",
+                "error": null
+              },
+              {
+                "caseId": "heldout-support-absent-01",
+                "name": "Store opening hours absent",
+                "passed": true,
+                "expected": {
+                  "citations": [],
+                  "supported": false
+                },
+                "actual": {
+                  "message": "What time does your physical store open on Saturdays?",
+                  "email": "sample@example.invalid",
+                  "validated": true,
+                  "citations": [],
+                  "supported": false,
+                  "sources": [],
+                  "draft": "I don’t have a supported answer from the supplied sources. Please refer this to human review.",
+                  "effectsSuppressed": true
+                },
+                "runId": "a279cfe6-e79f-4669-af8e-c60f14823a7f",
+                "error": null
+              }
+            ],
+            "passed": 4,
+            "total": 4,
+            "usage": {
+              "inputTokens": 3541,
+              "outputTokens": 500,
+              "costUsd": 0.0013082,
+              "model": "gpt-5.6-luna",
+              "latencyMs": 16201.051999999992
+            }
+          }
+        ],
+        "recommendation": "Keyword retrieval meets all 4 declared cases. Prefer the least complex passing candidate; this small fixture set does not establish production accuracy. Constraints retained: Do not execute arbitrary code Local demonstration data only Human approval before the local outbox No external delivery",
+        "rubricVersion": "2.0",
+        "evaluatorVersion": "expected-fields-2.0",
+        "caseSetHash": "c53442cfb32495c9043c9120a7394c2fe5be3c9b499ae272f1019c6ba5606d8e"
+      }
+    }
+  ]
+}

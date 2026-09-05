@@ -1,0 +1,582 @@
+{
+  "format": "promethean-workflow",
+  "version": "2.0",
+  "exportedAt": "2026-09-05T05:02:53.342Z",
+  "workflow": {
+    "id": "987ee017-c61a-44af-86a1-f35a66f51c8e",
+    "name": "Triage incoming requests",
+    "description": "Classify requests, prepare a reply, and review it before writing to a local outbox.",
+    "revision": 1,
+    "schemaVersion": "2.0",
+    "rubricVersion": "2.0",
+    "exampleId": "inbound-triage",
+    "status": "draft",
+    "createdAt": "2026-09-05T04:52:09.723Z",
+    "updatedAt": "2026-09-05T04:52:09.723Z",
+    "brief": {
+      "goal": "Classify requests, prepare a reply, and review it before writing to a local outbox.",
+      "inputs": "A synthetic message and customer email.",
+      "outputs": "A proposed answer and reviewed local outbox record",
+      "volume": "Manual example runs; no schedule is configured",
+      "constraints": [
+        "Do not execute arbitrary code",
+        "Local demonstration data only",
+        "Human approval before the local outbox",
+        "No external delivery"
+      ],
+      "successCriteria": [
+        "Use the correct route or escalate uncertainty",
+        "Do not deliver without an approval"
+      ],
+      "unknowns": [
+        "Production data distribution and operational error tolerance have not been measured"
+      ]
+    },
+    "decision": {
+      "recommendation": "Start with the deterministic candidate and compare the shared test cases.",
+      "rationale": "The curated cases make the tradeoff inspectable. Escalate complexity only when measured results justify it.",
+      "candidateId": "enhanced-rules",
+      "evidenceIds": [
+        "rubric-v2",
+        "triage-fixtures",
+        "common-grader"
+      ],
+      "status": "proposed",
+      "questions": []
+    },
+    "candidates": [
+      {
+        "id": "rules",
+        "name": "Simple rules",
+        "archetype": "rules",
+        "summary": "Direct billing, technical, and sales keywords.",
+        "tradeoffs": [
+          "Easy to inspect",
+          "Misses phrasing outside the declared rules"
+        ],
+        "evidenceIds": [
+          "triage-fixtures"
+        ],
+        "requiresModel": false,
+        "implementation": "rules"
+      },
+      {
+        "id": "enhanced-rules",
+        "name": "Expanded rules",
+        "archetype": "rules",
+        "summary": "Recognize explicit synonyms and handle uncertain requests.",
+        "tradeoffs": [
+          "Still deterministic and inexpensive",
+          "Coverage is limited to the curated vocabulary"
+        ],
+        "evidenceIds": [
+          "triage-fixtures"
+        ],
+        "requiresModel": false,
+        "implementation": "enhanced-rules"
+      },
+      {
+        "id": "model",
+        "name": "Bounded model workflow",
+        "archetype": "ai-workflow",
+        "summary": "Use structured interpretation and draft under the same approval gate.",
+        "tradeoffs": [
+          "Handles varied language",
+          "Adds measured cost and variable output"
+        ],
+        "evidenceIds": [
+          "triage-fixtures"
+        ],
+        "requiresModel": true,
+        "implementation": "model"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "validate",
+        "label": "Check the request",
+        "description": "Require a message and syntactically valid recipient email.",
+        "kind": "validate",
+        "archetype": "rules",
+        "config": {
+          "requiredFields": [
+            "message",
+            "email"
+          ],
+          "maxLength": 8000
+        },
+        "provenance": {
+          "requirement": "Require a message and syntactically valid recipient email.",
+          "rationale": "A bounded validate step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "triage-fixtures"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "triage-billing",
+            "triage-synonym",
+            "triage-technical",
+            "triage-unknown"
+          ],
+          "status": "untested"
+        }
+      },
+      {
+        "id": "classify",
+        "label": "Choose a route",
+        "description": "Choose billing, technical, sales, or review; preserve uncertainty.",
+        "kind": "classify",
+        "archetype": "model-task",
+        "config": {
+          "domain": "triage"
+        },
+        "provenance": {
+          "requirement": "Choose billing, technical, sales, or review; preserve uncertainty.",
+          "rationale": "A bounded classify step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "triage-fixtures"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "triage-billing",
+            "triage-synonym",
+            "triage-technical",
+            "triage-unknown"
+          ],
+          "status": "untested"
+        }
+      },
+      {
+        "id": "draft",
+        "label": "Prepare the response",
+        "description": "Prepare a concise response and retain its supporting citations.",
+        "kind": "draft",
+        "archetype": "model-task",
+        "config": {
+          "domain": "triage"
+        },
+        "provenance": {
+          "requirement": "Prepare a concise response and retain its supporting citations.",
+          "rationale": "A bounded draft step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "triage-fixtures"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "triage-billing",
+            "triage-synonym",
+            "triage-technical",
+            "triage-unknown"
+          ],
+          "status": "untested"
+        }
+      },
+      {
+        "id": "approval",
+        "label": "Review before delivery",
+        "description": "A person must approve this exact revision and prepared action.",
+        "kind": "approval",
+        "archetype": "assistant",
+        "config": {
+          "action": "local-outbox"
+        },
+        "provenance": {
+          "requirement": "A person must approve this exact revision and prepared action.",
+          "rationale": "A bounded approval step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "triage-fixtures"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "triage-billing",
+            "triage-synonym",
+            "triage-technical",
+            "triage-unknown"
+          ],
+          "status": "untested"
+        }
+      },
+      {
+        "id": "outbox",
+        "label": "Write to the local outbox",
+        "description": "Write one local demonstration message. No email is sent.",
+        "kind": "outbox",
+        "archetype": "rules",
+        "config": {
+          "adapter": "local-outbox"
+        },
+        "provenance": {
+          "requirement": "Write one local demonstration message. No email is sent.",
+          "rationale": "A bounded outbox step with explicit inputs and outputs.",
+          "evidenceIds": [
+            "rubric-v2",
+            "triage-fixtures"
+          ],
+          "alternatives": [
+            "Manual review",
+            "A more capable model does not remove approval requirements"
+          ],
+          "rubricVersion": "2.0",
+          "testedBy": [
+            "triage-billing",
+            "triage-synonym",
+            "triage-technical",
+            "triage-unknown"
+          ],
+          "status": "untested"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "validate-classify",
+        "source": "validate",
+        "target": "classify"
+      },
+      {
+        "id": "classify-draft",
+        "source": "classify",
+        "target": "draft"
+      },
+      {
+        "id": "draft-approval",
+        "source": "draft",
+        "target": "approval"
+      },
+      {
+        "id": "approval-outbox",
+        "source": "approval",
+        "target": "outbox"
+      }
+    ],
+    "tests": [
+      {
+        "id": "triage-billing",
+        "name": "Explicit billing request",
+        "input": {
+          "message": "I have a billing question about my invoice.",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "route": "billing"
+        },
+        "description": "A direct keyword baseline."
+      },
+      {
+        "id": "triage-synonym",
+        "name": "A charge described indirectly",
+        "input": {
+          "message": "I was charged twice for the same order.",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "route": "billing"
+        },
+        "description": "Expanded rules recognize a phrase missed by the simple baseline."
+      },
+      {
+        "id": "triage-technical",
+        "name": "Technical failure",
+        "input": {
+          "message": "The page shows an error when I open the dashboard.",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "route": "technical"
+        },
+        "description": "A technical issue requires the technical route."
+      },
+      {
+        "id": "triage-unknown",
+        "name": "Unsupported request",
+        "input": {
+          "message": "Can you coordinate a custom international logistics contract?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "route": "specialist"
+        },
+        "description": "The declared taxonomy cannot satisfy this requested route. This intentionally shows that neither deterministic candidate qualifies for all requirements."
+      }
+    ],
+    "sampleInput": {
+      "message": "I was charged twice for the same order.",
+      "email": "sample@example.invalid"
+    },
+    "designSource": "local-rubric",
+    "model": null
+  },
+  "evidence": [
+    {
+      "id": "rubric-v2",
+      "title": "The least complex sufficient solution",
+      "source": "docs/architecture/canonical-rubric.md",
+      "excerpt": "A process change or deterministic rule is a valid outcome. Capability and permission are separate. Use task evidence before increasing complexity.",
+      "category": "methodology",
+      "revision": "2.0",
+      "verified": true
+    },
+    {
+      "id": "triage-fixtures",
+      "title": "Inbound request triage fixture",
+      "source": "packages/core/src/catalog.ts",
+      "excerpt": "Synthetic requests include direct keywords, semantic variants, and unsupported requests. Simple keyword rules fail some variants; escalation remains an explicit outcome.",
+      "category": "example",
+      "revision": "2.0",
+      "verified": true
+    },
+    {
+      "id": "common-grader",
+      "title": "Independent field-based acceptance grader",
+      "source": "packages/core/src/execution.ts#evaluateExpected",
+      "excerpt": "Every candidate receives the same case set and expected fields. The deterministic grader compares expected subsets, not model confidence or self-assigned capability labels.",
+      "category": "evaluation",
+      "revision": "2.0",
+      "verified": true
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "89f2c2c6-396b-4ec7-a9bb-893d2e29ddac",
+      "workflowId": "987ee017-c61a-44af-86a1-f35a66f51c8e",
+      "workflowRevision": 1,
+      "createdAt": "2026-09-05T04:52:09.726Z",
+      "mode": "live",
+      "results": [
+        {
+          "candidateId": "rules",
+          "name": "Simple rules",
+          "cases": [
+            {
+              "caseId": "triage-billing",
+              "name": "Explicit billing request",
+              "passed": true,
+              "expected": {
+                "route": "billing"
+              },
+              "actual": {
+                "route": "billing"
+              },
+              "runId": "772ee18b-f098-40a5-81cc-ca50c47fd7b7",
+              "error": null
+            },
+            {
+              "caseId": "triage-synonym",
+              "name": "A charge described indirectly",
+              "passed": false,
+              "expected": {
+                "route": "billing"
+              },
+              "actual": {
+                "route": "review"
+              },
+              "runId": "fadb4222-2573-45eb-a188-a3c5cee8a123",
+              "error": null
+            },
+            {
+              "caseId": "triage-technical",
+              "name": "Technical failure",
+              "passed": true,
+              "expected": {
+                "route": "technical"
+              },
+              "actual": {
+                "route": "technical"
+              },
+              "runId": "60f0c47a-0d95-47ae-bd59-d661649790bb",
+              "error": null
+            },
+            {
+              "caseId": "triage-unknown",
+              "name": "Unsupported request",
+              "passed": false,
+              "expected": {
+                "route": "specialist"
+              },
+              "actual": {
+                "route": "review"
+              },
+              "runId": "0bbff098-2054-441a-86c2-8f15d752d7a1",
+              "error": null
+            }
+          ],
+          "passed": 2,
+          "total": 4,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 15.142599999999675
+          }
+        },
+        {
+          "candidateId": "enhanced-rules",
+          "name": "Expanded rules",
+          "cases": [
+            {
+              "caseId": "triage-billing",
+              "name": "Explicit billing request",
+              "passed": true,
+              "expected": {
+                "route": "billing"
+              },
+              "actual": {
+                "route": "billing"
+              },
+              "runId": "470de2d7-ea98-4a8d-b9d9-b78e5c1c38cf",
+              "error": null
+            },
+            {
+              "caseId": "triage-synonym",
+              "name": "A charge described indirectly",
+              "passed": true,
+              "expected": {
+                "route": "billing"
+              },
+              "actual": {
+                "route": "billing"
+              },
+              "runId": "057c0850-ca59-4e58-9a92-1833eb91b0fa",
+              "error": null
+            },
+            {
+              "caseId": "triage-technical",
+              "name": "Technical failure",
+              "passed": true,
+              "expected": {
+                "route": "technical"
+              },
+              "actual": {
+                "route": "technical"
+              },
+              "runId": "94bb5f68-2e0f-4bd2-a532-90b2fda5a645",
+              "error": null
+            },
+            {
+              "caseId": "triage-unknown",
+              "name": "Unsupported request",
+              "passed": false,
+              "expected": {
+                "route": "specialist"
+              },
+              "actual": {
+                "route": "review"
+              },
+              "runId": "9e778c15-585b-4c68-a5f0-438c1cda6f76",
+              "error": null
+            }
+          ],
+          "passed": 3,
+          "total": 4,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "costUsd": 0,
+            "model": null,
+            "latencyMs": 16.119099999999435
+          }
+        },
+        {
+          "candidateId": "model",
+          "name": "Bounded model workflow",
+          "cases": [
+            {
+              "caseId": "triage-billing",
+              "name": "Explicit billing request",
+              "passed": true,
+              "expected": {
+                "route": "billing"
+              },
+              "actual": {
+                "route": "billing"
+              },
+              "runId": "8fc14d4a-8b08-41bc-8e08-084f878661b7",
+              "error": null
+            },
+            {
+              "caseId": "triage-synonym",
+              "name": "A charge described indirectly",
+              "passed": true,
+              "expected": {
+                "route": "billing"
+              },
+              "actual": {
+                "route": "billing"
+              },
+              "runId": "a91697a6-20bf-4f2a-877f-fff80dccc2ba",
+              "error": null
+            },
+            {
+              "caseId": "triage-technical",
+              "name": "Technical failure",
+              "passed": true,
+              "expected": {
+                "route": "technical"
+              },
+              "actual": {
+                "route": "technical"
+              },
+              "runId": "55521d21-fcc8-4d73-9dc7-51cf1e839546",
+              "error": null
+            },
+            {
+              "caseId": "triage-unknown",
+              "name": "Unsupported request",
+              "passed": false,
+              "expected": {
+                "route": "specialist"
+              },
+              "actual": {
+                "route": "sales"
+              },
+              "runId": "50312568-e8be-487a-b255-1df2713ae4af",
+              "error": null
+            }
+          ],
+          "passed": 3,
+          "total": 4,
+          "usage": {
+            "inputTokens": 1297,
+            "outputTokens": 481,
+            "costUsd": 0.0008366000000000001,
+            "model": "gpt-5.6-luna",
+            "latencyMs": 15036.363699999996
+          }
+        }
+      ],
+      "recommendation": "Neither compared approach meets all declared requirements. Keep human review, examine failed cases, and revise the taxonomy or design before enabling. Constraints retained: Do not execute arbitrary code Local demonstration data only Human approval before the local outbox No external delivery",
+      "rubricVersion": "2.0",
+      "evaluatorVersion": "expected-fields-2.0",
+      "caseSetHash": "175c92cd82a20cbc1d8e854cbe2bddc3cdd1cc498721ef8e7f234e4dca9cba6e"
+    }
+  ],
+  "requirements": [
+    "Node.js 24+",
+    "Promethean 2.0 shared runtime or CLI",
+    "Optional live mode: OPENAI_API_KEY or OPENAI_API_KEY_FILE, Luna/Terra access, and remaining usage allowance",
+    "local-outbox adapter only; external delivery is not implemented"
+  ],
+  "runbook": "Validate the package checksum and graph before importing. Run deterministic tests with the Promethean CLI; comparison suppresses all effects. Review the brief, provenance, and constraints. Live execution is optional and uses ordinary budget, approval, and idempotency checks. Included inputs are verified synthetic fixtures. Workflow descriptions and configuration are part of the exported definition; review them before sharing.",
+  "checksum": "e5915b1579cfa3d87dcad55002239f79dec22b6cbf30e86844bbca68a7155332"
+}

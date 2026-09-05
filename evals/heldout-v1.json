@@ -1,0 +1,110 @@
+{
+  "version": "heldout-v1",
+  "authoredBeforeExecution": true,
+  "cases": {
+    "inbound-triage": [
+      {
+        "id": "heldout-triage-billing-01",
+        "name": "Duplicate charge",
+        "description": "A payment discrepancy expressed without a billing category label.",
+        "input": {
+          "message": "I bought one subscription yesterday, but my card now shows two completed charges for the same amount. Can you check the extra payment?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "route": "billing"
+        }
+      },
+      {
+        "id": "heldout-triage-technical-01",
+        "name": "Export failure",
+        "description": "A reproducible product malfunction described through the user's attempted action.",
+        "input": {
+          "message": "Every time I choose Download CSV, the page turns blank and no file appears. Signing out and trying again did not help. Could someone help me get the export working?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "route": "technical"
+        }
+      },
+      {
+        "id": "heldout-triage-sales-01",
+        "name": "Team purchase enquiry",
+        "description": "A prospective customer asks for a demonstration and pricing before purchasing.",
+        "input": {
+          "message": "Our team is comparing tools for about forty colleagues. Could we see a walkthrough and get a quote before deciding whether to sign up?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "route": "sales"
+        }
+      },
+      {
+        "id": "heldout-triage-review-01",
+        "name": "Unspecified account request",
+        "description": "The request lacks enough detail to distinguish payment, product, or purchasing needs and requires review.",
+        "input": {
+          "message": "Something about my account needs sorting out, but I am not sure who handles it. Can someone take a look and help me figure out the next step?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "route": "review"
+        }
+      }
+    ],
+    "knowledge-support": [
+      {
+        "id": "heldout-support-returns-01",
+        "name": "Unopened purchase paraphrase",
+        "description": "A natural paraphrase asks about return eligibility and initiation using facts covered by the returns article.",
+        "input": {
+          "message": "My purchase was delivered twelve days ago and is still unopened and unused. I have the receipt. Am I still in time to send it back, and where do I begin?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "citations": ["kb-returns"],
+          "supported": true
+        }
+      },
+      {
+        "id": "heldout-support-shipping-01",
+        "name": "Shipping duration and tracking",
+        "description": "Two precise questions are fully answerable from the shipping article.",
+        "input": {
+          "message": "How many business days does standard shipping take, and where can I find tracking after the order has been dispatched?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "citations": ["kb-shipping"],
+          "supported": true
+        }
+      },
+      {
+        "id": "heldout-support-password-01",
+        "name": "Password reset instructions and expiry",
+        "description": "A precise procedural question and expiry question are both covered by the password article.",
+        "input": {
+          "message": "Where do I request a password reset, and how many minutes is the reset link valid?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "citations": ["kb-password"],
+          "supported": true
+        }
+      },
+      {
+        "id": "heldout-support-absent-01",
+        "name": "Store opening hours absent",
+        "description": "Opening hours are absent from all three supplied articles, so no citation or supported answer is warranted.",
+        "input": {
+          "message": "What time does your physical store open on Saturdays?",
+          "email": "sample@example.invalid"
+        },
+        "expected": {
+          "citations": [],
+          "supported": false
+        }
+      }
+    ]
+  }
+}
