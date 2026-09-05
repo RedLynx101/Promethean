@@ -104,7 +104,7 @@ These small samples support specific design decisions, not production accuracy c
 ## Inside the system
 
 ```mermaid
-flowchart LR
+flowchart TB
   Studio[React studio] --> API[Validated API]
   Codex[Codex skill] --> CLI[Portable CLI]
   CLI --> Core[Shared contracts<br/>rubric · evidence · evaluator]
@@ -116,8 +116,8 @@ flowchart LR
   Approval --> Outbox[Transactional local outbox]
   classDef interface fill:#f5f2e9,stroke:#95694c,color:#20343a
   classDef engine fill:#eaf0e7,stroke:#5e7860,color:#20343a
-  class Studio,Codex,CLI interface
-  class Core,Runtime,DB,Approval engine
+  class Studio,Codex,CLI,API,Agents interface
+  class Core,Runtime,DB,Approval,Outbox engine
 ```
 
 The important boundaries live in code: Zod schemas validate transport and model output; immutable revisions prevent stale edits from overwriting current work; graph validation rejects unsupported operations and approval bypasses. SQLite persists jobs, completed steps, approvals and cost reservations across requests and restarts. Canvas positions cannot change executable meaning.
