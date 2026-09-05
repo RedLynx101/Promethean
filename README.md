@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/badge/TypeScript-5.9-253b42?style=flat-square" alt="TypeScript 5.9">
   <img src="https://img.shields.io/badge/Node.js-24-59735d?style=flat-square" alt="Node.js 24">
   <img src="https://img.shields.io/badge/Agents_SDK-0.17.0-916347?style=flat-square" alt="OpenAI Agents SDK 0.17.0">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-59735d?style=flat-square" alt="MIT License"></a>
 </p>
 
 <p align="center">
@@ -176,4 +177,6 @@ Promethean runs in one local workspace with three installed recipes and a restri
 
 Created from the Agentic Systems Studio project led by **[Noah Hicks](https://github.com/RedLynx101)** with **Rushabh Kankariya**, **Vishnu Bala**, **Yiying Lu** and **Mel Wong**. This v2 redesign is Noah's subsequent development with Codex assistance; original team work and Git history are preserved. [Project history](docs/history/README.md) · [AI-use disclosure](AI_USAGE.md).
 
-The alpha metadata declared MIT, but the inspected baseline contained no standalone license grant. A new repository-wide license is not inferred; dependencies retain their own licenses.
+## License
+
+Released under the [MIT License](LICENSE). Copyright © 2026 Noah Hicks and contributors. Third-party dependencies retain their own licenses.

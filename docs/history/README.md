@@ -14,4 +14,4 @@ The active v2 workspace starts from alpha commit `3029924`. The original impleme
 
 Alpha reports contain historical model results and estimates. They are evidence about that release, not measurements of v2 or production accuracy. V2's regression tests address graph-loss, ambiguous-input, constraint retention and approval-boundary failure mechanisms. Historical labels retain their original rubric rather than being silently recast.
 
-The root alpha manifest declared MIT but the inspected baseline did not contain a standalone license file. Team attribution and third-party asset provenance remain relevant; no new blanket grant is inferred.
+The root alpha manifest declared MIT but the inspected baseline did not contain a standalone license file. The v2 repository now includes an explicit [MIT License](../../LICENSE), added by Noah Hicks. Original team attribution and third-party notices remain intact.

@@ -72,4 +72,4 @@ Browser verification found a proxy-origin mismatch, inadequate muted-text contra
 - The $5 allowance belongs to a data directory, not the OpenAI account. Unknown provider outcomes keep reservations. A fresh directory must not be used to evade a budget.
 - Default exports omit custom private fixtures and raw traces. Review descriptions and configuration before sharing; a checksum proves integrity, not authorship or truth.
 - Codex skill metadata and behavior were checked locally. Native `/promethean` registration was not asserted; use `$promethean` or `/skills` in a Codex task opened on the repository.
-- The archive retains the course team's original work and labels. Licensing requires confirmation of the original authors' intent; no new blanket license is implied.
+- The archive retains the course team's original work and labels. The repository is released under the [MIT License](../LICENSE); original attribution and third-party notices remain intact.

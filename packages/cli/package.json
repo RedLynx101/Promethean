@@ -11,5 +11,6 @@
   "dependencies": {
     "@promethean/core": "workspace:*",
     "tsx": "^4.21.0"
-  }
+  },
+  "license": "MIT"
 }

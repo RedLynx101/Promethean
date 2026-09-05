@@ -8,5 +8,6 @@
     "@promethean/core": "workspace:*",
     "@openai/agents": "0.17.0",
     "zod": "^4.0.0"
-  }
+  },
+  "license": "MIT"
 }
